@@ -14,7 +14,225 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      denetim_bulgulari: {
+        Row: {
+          created_at: string
+          gecti: boolean
+          id: string
+          ilgili_asama: string | null
+          kanit_alintisi: string | null
+          kural_no: number
+          mesaj: string | null
+          plan_id: string | null
+          seviye: string
+        }
+        Insert: {
+          created_at?: string
+          gecti?: boolean
+          id?: string
+          ilgili_asama?: string | null
+          kanit_alintisi?: string | null
+          kural_no: number
+          mesaj?: string | null
+          plan_id?: string | null
+          seviye: string
+        }
+        Update: {
+          created_at?: string
+          gecti?: boolean
+          id?: string
+          ilgili_asama?: string | null
+          kanit_alintisi?: string | null
+          kural_no?: number
+          mesaj?: string | null
+          plan_id?: string | null
+          seviye?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denetim_bulgulari_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planlar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geri_bildirimler: {
+        Row: {
+          created_at: string
+          id: string
+          not_metni: string | null
+          plan_id: string | null
+          uygulandi_mi: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          not_metni?: string | null
+          plan_id?: string | null
+          uygulandi_mi?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          not_metni?: string | null
+          plan_id?: string | null
+          uygulandi_mi?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geri_bildirimler_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planlar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kazanimlar: {
+        Row: {
+          atolye_alani: string
+          bloom_seviyesi: string
+          created_at: string
+          id: string
+          kod: string
+          metin: string
+          yas_grubu: string
+        }
+        Insert: {
+          atolye_alani: string
+          bloom_seviyesi: string
+          created_at?: string
+          id?: string
+          kod: string
+          metin: string
+          yas_grubu: string
+        }
+        Update: {
+          atolye_alani?: string
+          bloom_seviyesi?: string
+          created_at?: string
+          id?: string
+          kod?: string
+          metin?: string
+          yas_grubu?: string
+        }
+        Relationships: []
+      }
+      ogretim_modelleri: {
+        Row: {
+          ad: string
+          asamalar: Json
+          created_at: string
+          denetim_kurallari: Json
+          id: string
+        }
+        Insert: {
+          ad: string
+          asamalar?: Json
+          created_at?: string
+          denetim_kurallari?: Json
+          id?: string
+        }
+        Update: {
+          ad?: string
+          asamalar?: Json
+          created_at?: string
+          denetim_kurallari?: Json
+          id?: string
+        }
+        Relationships: []
+      }
+      planlar: {
+        Row: {
+          butce: number
+          created_at: string
+          durum: string
+          icerik: Json
+          id: string
+          kazanim_id: string | null
+          model_id: string | null
+          ogrenci_sayisi: number
+          toplam_sure: number
+          versiyon: number
+          yas_grubu: string
+        }
+        Insert: {
+          butce?: number
+          created_at?: string
+          durum?: string
+          icerik?: Json
+          id?: string
+          kazanim_id?: string | null
+          model_id?: string | null
+          ogrenci_sayisi?: number
+          toplam_sure?: number
+          versiyon?: number
+          yas_grubu: string
+        }
+        Update: {
+          butce?: number
+          created_at?: string
+          durum?: string
+          icerik?: Json
+          id?: string
+          kazanim_id?: string | null
+          model_id?: string | null
+          ogrenci_sayisi?: number
+          toplam_sure?: number
+          versiyon?: number
+          yas_grubu?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planlar_kazanim_id_fkey"
+            columns: ["kazanim_id"]
+            isOneToOne: false
+            referencedRelation: "kazanimlar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planlar_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "ogretim_modelleri"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surumler: {
+        Row: {
+          created_at: string
+          id: string
+          plan_id: string | null
+          snapshot: Json
+          versiyon_no: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_id?: string | null
+          snapshot?: Json
+          versiyon_no: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_id?: string | null
+          snapshot?: Json
+          versiyon_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surumler_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planlar"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
