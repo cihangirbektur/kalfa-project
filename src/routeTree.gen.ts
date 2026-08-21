@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DenetimRouteImport } from './routes/denetim'
+import { Route as EgitmenRouteImport } from './routes/egitmen'
+import { Route as HavuzRouteImport } from './routes/havuz'
+import { Route as YasUyarlamaRouteImport } from './routes/yas-uyarlama'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DenetimRoute = DenetimRouteImport.update({
+  id: '/denetim',
+  path: '/denetim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EgitmenRoute = EgitmenRouteImport.update({
+  id: '/egitmen',
+  path: '/egitmen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HavuzRoute = HavuzRouteImport.update({
+  id: '/havuz',
+  path: '/havuz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YasUyarlamaRoute = YasUyarlamaRouteImport.update({
+  id: '/yas-uyarlama',
+  path: '/yas-uyarlama',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
+  id: '__root__' | '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DenetimRoute: typeof DenetimRoute
+  EgitmenRoute: typeof EgitmenRoute
+  HavuzRoute: typeof HavuzRoute
+  YasUyarlamaRoute: typeof YasUyarlamaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/denetim': {
+      id: '/denetim'
+      path: '/denetim'
+      fullPath: '/denetim'
+      preLoaderRoute: typeof DenetimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/egitmen': {
+      id: '/egitmen'
+      path: '/egitmen'
+      fullPath: '/egitmen'
+      preLoaderRoute: typeof EgitmenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/havuz': {
+      id: '/havuz'
+      path: '/havuz'
+      fullPath: '/havuz'
+      preLoaderRoute: typeof HavuzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/yas-uyarlama': {
+      id: '/yas-uyarlama'
+      path: '/yas-uyarlama'
+      fullPath: '/yas-uyarlama'
+      preLoaderRoute: typeof YasUyarlamaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DenetimRoute: DenetimRoute,
+  EgitmenRoute: EgitmenRoute,
+  HavuzRoute: HavuzRoute,
+  YasUyarlamaRoute: YasUyarlamaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
