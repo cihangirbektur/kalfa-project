@@ -14,6 +14,7 @@ import { Route as DenetimRouteImport } from './routes/denetim'
 import { Route as EgitmenRouteImport } from './routes/egitmen'
 import { Route as HavuzRouteImport } from './routes/havuz'
 import { Route as YasUyarlamaRouteImport } from './routes/yas-uyarlama'
+import { Route as PlanIdRouteImport } from './routes/plan.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const YasUyarlamaRoute = YasUyarlamaRouteImport.update({
   path: '/yas-uyarlama',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlanIdRoute = PlanIdRouteImport.update({
+  id: '/plan/$id',
+  path: '/plan/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,22 @@ export interface FileRoutesById {
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
+  fullPaths:
+    '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
-  id: '__root__' | '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama'
+  to: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/denetim'
+    | '/egitmen'
+    | '/havuz'
+    | '/yas-uyarlama'
+    | '/plan/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +94,7 @@ export interface RootRouteChildren {
   EgitmenRoute: typeof EgitmenRoute
   HavuzRoute: typeof HavuzRoute
   YasUyarlamaRoute: typeof YasUyarlamaRoute
+  PlanIdRoute: typeof PlanIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YasUyarlamaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plan/$id': {
+      id: '/plan/$id'
+      path: '/plan/$id'
+      fullPath: '/plan/$id'
+      preLoaderRoute: typeof PlanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +150,7 @@ const rootRouteChildren: RootRouteChildren = {
   EgitmenRoute: EgitmenRoute,
   HavuzRoute: HavuzRoute,
   YasUyarlamaRoute: YasUyarlamaRoute,
+  PlanIdRoute: PlanIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

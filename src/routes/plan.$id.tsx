@@ -86,7 +86,10 @@ function PlanGorunumu() {
 
   const kaydet = async () => {
     const { error } = await supabase.from("planlar").update({ icerik }).eq("id", plan.id);
-    if (error) return toast.error("Kaydedilemedi: " + error.message);
+    if (error) {
+      toast.error("Kaydedilemedi: " + error.message);
+      return;
+    }
     toast.success("Plan kaydedildi.");
     refetch();
   };
@@ -96,7 +99,10 @@ function PlanGorunumu() {
       .from("planlar")
       .update({ icerik, durum: "denetimde" })
       .eq("id", plan.id);
-    if (error) return toast.error("Gönderilemedi: " + error.message);
+    if (error) {
+      toast.error("Gönderilemedi: " + error.message);
+      return;
+    }
     toast.success("Plan denetime gönderildi.");
     refetch();
   };
