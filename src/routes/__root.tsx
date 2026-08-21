@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { RolSaglayici } from "@/lib/rol";
+import { Kabuk } from "@/components/Kabuk";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -77,11 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "KALFA — Atölye İçeriği Üretim Aracı" },
+      { name: "description", content: "Kalfa üretir, usta onaylar. DENEYAP atölye eğitmenleri için 5E uyumlu içerik üretim aracı." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "KALFA — Atölye İçeriği Üretim Aracı" },
+      { property: "og:description", content: "5E modeline uygun atölye planı, etkinlik ve ölçme aracı üretimi." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
@@ -102,7 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="tr">
       <head>
         <HeadContent />
       </head>
@@ -119,8 +122,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <RolSaglayici>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Kabuk>
+          <Outlet />
+        </Kabuk>
+        <Toaster />
+      </RolSaglayici>
     </QueryClientProvider>
   );
 }

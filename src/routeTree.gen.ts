@@ -10,33 +10,91 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DenetimRouteImport } from './routes/denetim'
+import { Route as EgitmenRouteImport } from './routes/egitmen'
+import { Route as HavuzRouteImport } from './routes/havuz'
+import { Route as YasUyarlamaRouteImport } from './routes/yas-uyarlama'
+import { Route as PlanIdRouteImport } from './routes/plan.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DenetimRoute = DenetimRouteImport.update({
+  id: '/denetim',
+  path: '/denetim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EgitmenRoute = EgitmenRouteImport.update({
+  id: '/egitmen',
+  path: '/egitmen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HavuzRoute = HavuzRouteImport.update({
+  id: '/havuz',
+  path: '/havuz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const YasUyarlamaRoute = YasUyarlamaRouteImport.update({
+  id: '/yas-uyarlama',
+  path: '/yas-uyarlama',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlanIdRoute = PlanIdRouteImport.update({
+  id: '/plan/$id',
+  path: '/plan/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/denetim': typeof DenetimRoute
+  '/egitmen': typeof EgitmenRoute
+  '/havuz': typeof HavuzRoute
+  '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/denetim'
+    | '/egitmen'
+    | '/havuz'
+    | '/yas-uyarlama'
+    | '/plan/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DenetimRoute: typeof DenetimRoute
+  EgitmenRoute: typeof EgitmenRoute
+  HavuzRoute: typeof HavuzRoute
+  YasUyarlamaRoute: typeof YasUyarlamaRoute
+  PlanIdRoute: typeof PlanIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +106,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/denetim': {
+      id: '/denetim'
+      path: '/denetim'
+      fullPath: '/denetim'
+      preLoaderRoute: typeof DenetimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/egitmen': {
+      id: '/egitmen'
+      path: '/egitmen'
+      fullPath: '/egitmen'
+      preLoaderRoute: typeof EgitmenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/havuz': {
+      id: '/havuz'
+      path: '/havuz'
+      fullPath: '/havuz'
+      preLoaderRoute: typeof HavuzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/yas-uyarlama': {
+      id: '/yas-uyarlama'
+      path: '/yas-uyarlama'
+      fullPath: '/yas-uyarlama'
+      preLoaderRoute: typeof YasUyarlamaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plan/$id': {
+      id: '/plan/$id'
+      path: '/plan/$id'
+      fullPath: '/plan/$id'
+      preLoaderRoute: typeof PlanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DenetimRoute: DenetimRoute,
+  EgitmenRoute: EgitmenRoute,
+  HavuzRoute: HavuzRoute,
+  YasUyarlamaRoute: YasUyarlamaRoute,
+  PlanIdRoute: PlanIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
