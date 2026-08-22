@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DenetimRouteImport } from './routes/denetim'
 import { Route as EgitmenRouteImport } from './routes/egitmen'
 import { Route as HavuzRouteImport } from './routes/havuz'
+import { Route as RaporlarRouteImport } from './routes/raporlar'
 import { Route as YasUyarlamaRouteImport } from './routes/yas-uyarlama'
 import { Route as PlanIdRouteImport } from './routes/plan.$id'
 
@@ -36,6 +37,11 @@ const HavuzRoute = HavuzRouteImport.update({
   path: '/havuz',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RaporlarRoute = RaporlarRouteImport.update({
+  id: '/raporlar',
+  path: '/raporlar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const YasUyarlamaRoute = YasUyarlamaRouteImport.update({
   id: '/yas-uyarlama',
   path: '/yas-uyarlama',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/denetim': typeof DenetimRoute
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
+  '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
   '/plan/$id': typeof PlanIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/denetim': typeof DenetimRoute
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
+  '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
   '/plan/$id': typeof PlanIdRoute
 }
@@ -69,21 +77,36 @@ export interface FileRoutesById {
   '/denetim': typeof DenetimRoute
   '/egitmen': typeof EgitmenRoute
   '/havuz': typeof HavuzRoute
+  '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
   '/plan/$id': typeof PlanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
+    | '/'
+    | '/denetim'
+    | '/egitmen'
+    | '/havuz'
+    | '/raporlar'
+    | '/yas-uyarlama'
+    | '/plan/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/denetim' | '/egitmen' | '/havuz' | '/yas-uyarlama' | '/plan/$id'
+  to:
+    | '/'
+    | '/denetim'
+    | '/egitmen'
+    | '/havuz'
+    | '/raporlar'
+    | '/yas-uyarlama'
+    | '/plan/$id'
   id:
     | '__root__'
     | '/'
     | '/denetim'
     | '/egitmen'
     | '/havuz'
+    | '/raporlar'
     | '/yas-uyarlama'
     | '/plan/$id'
   fileRoutesById: FileRoutesById
@@ -93,6 +116,7 @@ export interface RootRouteChildren {
   DenetimRoute: typeof DenetimRoute
   EgitmenRoute: typeof EgitmenRoute
   HavuzRoute: typeof HavuzRoute
+  RaporlarRoute: typeof RaporlarRoute
   YasUyarlamaRoute: typeof YasUyarlamaRoute
   PlanIdRoute: typeof PlanIdRoute
 }
@@ -127,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HavuzRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/raporlar': {
+      id: '/raporlar'
+      path: '/raporlar'
+      fullPath: '/raporlar'
+      preLoaderRoute: typeof RaporlarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/yas-uyarlama': {
       id: '/yas-uyarlama'
       path: '/yas-uyarlama'
@@ -149,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   DenetimRoute: DenetimRoute,
   EgitmenRoute: EgitmenRoute,
   HavuzRoute: HavuzRoute,
+  RaporlarRoute: RaporlarRoute,
   YasUyarlamaRoute: YasUyarlamaRoute,
   PlanIdRoute: PlanIdRoute,
 }
