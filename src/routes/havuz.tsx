@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
-import { DURUMLAR, YAS_GRUPLARI, type Kazanim, type Plan } from "@/lib/tipler";
+import { DURUMLAR, SINIF_DUZEYLERI, SINIF_ETIKET, type Kazanim, type Plan } from "@/lib/tipler";
 
 export const Route = createFileRoute("/havuz")({
   head: () => ({
@@ -99,7 +99,13 @@ function Havuz() {
           <CardTitle className="text-base">Planlar</CardTitle>
           <div className="flex flex-wrap gap-2">
             <Filtre deger={alan} degistir={setAlan} etiket="Atölye alanı" secenekler={alanlar} />
-            <Filtre deger={yas} degistir={setYas} etiket="Yaş grubu" secenekler={[...YAS_GRUPLARI]} />
+            <Filtre
+              deger={yas}
+              degistir={setYas}
+              etiket="Sınıf düzeyi"
+              secenekler={SINIF_DUZEYLERI.map((s) => s.deger)}
+              etiketle={(v) => SINIF_ETIKET[v] ?? v}
+            />
             <Filtre
               deger={durum}
               degistir={setDurum}
@@ -115,7 +121,7 @@ function Havuz() {
                 <TableHead>Başlık</TableHead>
                 <TableHead>Atölye alanı</TableHead>
                 <TableHead>Kazanım</TableHead>
-                <TableHead>Yaş</TableHead>
+                <TableHead>Sınıf düzeyi</TableHead>
                 <TableHead>Durum</TableHead>
                 <TableHead>Versiyon</TableHead>
                 <TableHead>Tarih</TableHead>
@@ -149,7 +155,7 @@ function Havuz() {
                     </TableCell>
                     <TableCell>{k?.atolye_alani ?? "—"}</TableCell>
                     <TableCell>{k?.kod ?? "—"}</TableCell>
-                    <TableCell>{p.yas_grubu}</TableCell>
+                    <TableCell>{SINIF_ETIKET[p.yas_grubu] ?? p.yas_grubu}</TableCell>
                     <TableCell>
                       <DurumEtiketi durum={p.durum} />
                     </TableCell>
@@ -173,11 +179,13 @@ function Filtre({
   degistir,
   etiket,
   secenekler,
+  etiketle,
 }: {
   deger: string;
   degistir: (v: string) => void;
   etiket: string;
   secenekler: string[];
+  etiketle?: (v: string) => string;
 }) {
   return (
     <Select value={deger} onValueChange={degistir}>
@@ -188,7 +196,7 @@ function Filtre({
         <SelectItem value={TUMU}>{etiket}: Tümü</SelectItem>
         {secenekler.map((s) => (
           <SelectItem key={s} value={s}>
-            {s}
+            {etiketle ? etiketle(s) : s}
           </SelectItem>
         ))}
       </SelectContent>

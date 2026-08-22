@@ -26,7 +26,8 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { useRol } from "@/lib/rol";
-import type { Asama, Kazanim, PlanIcerik, Plan } from "@/lib/tipler";
+import { SINIF_ETIKET, PROGRAM_DONEMI_ETIKET } from "@/lib/tipler";
+import type { Asama, Kazanim, PlanIcerik, Plan, OgretimModeli } from "@/lib/tipler";
 
 export const Route = createFileRoute("/plan/$id")({
   head: () => ({
@@ -68,7 +69,16 @@ function PlanGorunumu() {
           .single();
         kazanim = (k as Kazanim) ?? null;
       }
-      return { plan: plan as unknown as Plan, kazanim };
+      let model: OgretimModeli | null = null;
+      if (plan.model_id) {
+        const { data: m } = await supabase
+          .from("ogretim_modelleri")
+          .select("*")
+          .eq("id", plan.model_id)
+          .single();
+        model = (m as unknown as OgretimModeli) ?? null;
+      }
+      return { plan: plan as unknown as Plan, kazanim, model };
     },
   });
 
@@ -81,7 +91,7 @@ function PlanGorunumu() {
     return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
   }
 
-  const { plan, kazanim } = data;
+  const { plan, kazanim, model } = data;
   const duzenlenebilir = rol === "İçerik Uzmanı";
 
   const kaydet = async () => {
@@ -132,8 +142,13 @@ function PlanGorunumu() {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="secondary">Yaş: {plan.yas_grubu}</Badge>
-            <Badge variant="secondary">Model: 5E</Badge>
+            <Badge variant="secondary">{SINIF_ETIKET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
+            {model && <Badge variant="secondary">Model: {model.ad}</Badge>}
+            {plan.program_donemi && (
+              <Badge variant="secondary">
+                {PROGRAM_DONEMI_ETIKET[plan.program_donemi] ?? plan.program_donemi}
+              </Badge>
+            )}
             <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
             <Badge variant="secondary">v{plan.versiyon}</Badge>
             <DurumEtiketi durum={plan.durum} />
