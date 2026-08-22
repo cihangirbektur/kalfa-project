@@ -1,0 +1,2 @@
+ALTER TABLE public.kazanimlar ADD COLUMN IF NOT EXISTS kategori text NOT NULL DEFAULT 'yuz_yuze';
+ALTER TABLE public.planlar ADD COLUMN IF NOT EXISTS program_donemi text NOT NULL DEFAULT 'proje_temelli';

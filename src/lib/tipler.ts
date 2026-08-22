@@ -57,6 +57,7 @@ export type Kazanim = {
   atolye_alani: string;
   yas_grubu: string;
   bloom_seviyesi: string;
+  kategori: string;
 };
 
 export type OgretimModeli = {
@@ -76,11 +77,35 @@ export type Plan = {
   butce: number;
   durum: string;
   versiyon: number;
+  program_donemi?: string;
   icerik: PlanIcerik;
   created_at: string;
 };
 
-export const YAS_GRUPLARI = ["9-11", "12-14", "15-17"] as const;
+export const SINIF_DUZEYLERI = [
+  { deger: "4-5", etiket: "4-5. sınıf (9-11 yaş)" },
+  { deger: "6-7", etiket: "6-7. sınıf (11-13 yaş)" },
+  { deger: "8-9", etiket: "8-9. sınıf (13-15 yaş)" },
+  { deger: "10-11", etiket: "10-11. sınıf (15-17 yaş)" },
+] as const;
+
+export const SINIF_ETIKET: Record<string, string> = Object.fromEntries(
+  SINIF_DUZEYLERI.map((s) => [s.deger, s.etiket]),
+);
+
+export const PROGRAM_DONEMLERI = [
+  { deger: "proje_temelli", etiket: "Proje Temelli Dersler Dönemi (ilk 24 ay)" },
+  { deger: "takimlar", etiket: "Takımlar Dönemi (son 12 ay)" },
+] as const;
+
+export const PROGRAM_DONEMI_ETIKET: Record<string, string> = Object.fromEntries(
+  PROGRAM_DONEMLERI.map((p) => [p.deger, p.etiket]),
+);
+
+export const KATEGORI_ETIKET: Record<string, string> = {
+  yuz_yuze: "Yüz Yüze Eğitimler",
+  cevrim_ici: "Çevrim İçi Eğitimler",
+};
 export const DURUMLAR = ["taslak", "denetimde", "onayli"] as const;
 
 export const DURUM_ETIKET: Record<string, string> = {

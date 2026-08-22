@@ -96,6 +96,7 @@ export type Database = {
           bloom_seviyesi: string
           created_at: string
           id: string
+          kategori: string
           kod: string
           metin: string
           yas_grubu: string
@@ -105,6 +106,7 @@ export type Database = {
           bloom_seviyesi: string
           created_at?: string
           id?: string
+          kategori?: string
           kod: string
           metin: string
           yas_grubu: string
@@ -114,6 +116,7 @@ export type Database = {
           bloom_seviyesi?: string
           created_at?: string
           id?: string
+          kategori?: string
           kod?: string
           metin?: string
           yas_grubu?: string
@@ -154,6 +157,7 @@ export type Database = {
           kazanim_id: string | null
           model_id: string | null
           ogrenci_sayisi: number
+          program_donemi: string
           toplam_sure: number
           versiyon: number
           yas_grubu: string
@@ -167,6 +171,7 @@ export type Database = {
           kazanim_id?: string | null
           model_id?: string | null
           ogrenci_sayisi?: number
+          program_donemi?: string
           toplam_sure?: number
           versiyon?: number
           yas_grubu: string
@@ -180,6 +185,7 @@ export type Database = {
           kazanim_id?: string | null
           model_id?: string | null
           ogrenci_sayisi?: number
+          program_donemi?: string
           toplam_sure?: number
           versiyon?: number
           yas_grubu?: string

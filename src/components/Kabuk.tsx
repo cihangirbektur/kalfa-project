@@ -1,6 +1,6 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
-import { ROLLER, useRol, type Rol } from "@/lib/rol";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
+import { ROLLER, ROL_MENULERI, erisimVarMi, useRol, type Rol } from "@/lib/rol";
 import {
   Select,
   SelectContent,
@@ -9,16 +9,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const GEZINME = [
-  { yol: "/", ad: "Yeni Plan" },
-  { yol: "/havuz", ad: "İçerik Havuzu" },
-  { yol: "/denetim", ad: "Denetim" },
-  { yol: "/egitmen", ad: "Eğitmen Görünümü" },
-] as const;
-
 export function Kabuk({ children }: { children: ReactNode }) {
   const { rol, setRol } = useRol();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const gezinme = ROL_MENULERI[rol];
+
+  useEffect(() => {
+    if (erisimVarMi(rol, pathname)) return;
+    const ilk = gezinme[0];
+    if (ilk) navigate({ to: ilk.yol });
+  }, [rol, pathname, gezinme, navigate]);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -30,7 +31,7 @@ export function Kabuk({ children }: { children: ReactNode }) {
           </p>
         </div>
         <nav className="flex flex-col gap-1 px-3">
-          {GEZINME.map((g) => {
+          {gezinme.map((g) => {
             const aktif = g.yol === "/" ? pathname === "/" : pathname.startsWith(g.yol);
             return (
               <Link
