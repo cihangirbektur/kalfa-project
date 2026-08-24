@@ -1,53 +1,96 @@
+export type KavramYanilgisi = { yanilgi: string; ele_alinma_bicimi: string };
+
 export type Asama = {
-  ad: string;
-  sure: number;
+  asama: string;
+  sure_dk: number;
   amac: string;
   ogretmen_eylemi: string;
   ogrenci_eylemi: string;
   tetikleyici_sorular: string[];
-  kavram_yanilgilari: string[];
+  beklenen_kavram_yanilgilari: KavramYanilgisi[];
+};
+
+export type OyunYapisi = {
+  oyuncu_sayisi: string;
+  bilesenler: string;
+  kart_veya_parca_tipleri: string[];
+  tur_akisi: string[];
+  kazanma_kosulu: string;
+} | null;
+
+export const OYUN_TIPLERI = ["kart_oyunu", "kutu_strateji_oyunu", "oyunlastirilmis_gorev"] as const;
+
+export const ETKINLIK_TIPLERI = [
+  "deney",
+  "kart_oyunu",
+  "kutu_strateji_oyunu",
+  "oyunlastirilmis_gorev",
+  "dijital_quiz",
+  "simulasyon",
+  "istasyon_calismasi",
+] as const;
+
+export const ETKINLIK_TIP_ETIKET: Record<string, string> = {
+  deney: "Deney",
+  kart_oyunu: "Kart Oyunu",
+  kutu_strateji_oyunu: "Kutu/Strateji Oyunu",
+  oyunlastirilmis_gorev: "Oyunlaştırılmış Görev",
+  dijital_quiz: "Dijital Quiz",
+  simulasyon: "Simülasyon",
+  istasyon_calismasi: "İstasyon Çalışması",
 };
 
 export type Etkinlik = {
   tip: string;
   ad: string;
-  asama: string;
-  sure: number;
+  bagli_asama: string;
+  sure_dk: number;
   adimlar: string[];
   kazanim_hizasi: string;
+  bloom_seviyesi: string;
   farklilastirma: { destek: string; zenginlestirme: string };
+  oyun_yapisi: OyunYapisi;
 };
 
 export type Malzeme = {
   ad: string;
-  adet: number;
-  birim_maliyet: number;
-  hazirlik_suresi: number;
+  adet: string | number;
+  tahmini_birim_maliyet_tl: number;
+  hazirlik_suresi_dk: number;
   guvenlik_notu: string;
   alternatif: string;
+  basilabilir_mi: boolean;
 };
 
 export type Medya = {
   tip: string;
+  kategori: string;
   aciklama: string;
   arama_terimi: string;
-  asama: string;
+  kullanilacak_asama: string;
 };
 
-export type Olcme = {
-  bicimlendirici_sorular: string[];
-  performans_gorevi: string;
-  rubrik: { kriter: string; puan3: string; puan2: string; puan1: string }[];
+export type Degerlendirme = {
+  bicimlendirici: { asama: string; soru: string }[];
+  duzey_belirleyici: {
+    gorev: string;
+    rubrik: { kriter: string; "3_puan": string; "2_puan": string; "1_puan": string }[];
+  };
 };
 
 export type PlanIcerik = {
-  baslik?: string;
-  ozet?: string;
+  plan_basligi?: string;
+  kazanim?: { kod: string; metin: string; bloom_seviyesi: string };
+  seviye?: string;
+  model?: string;
+  toplam_sure_dk?: number;
+  ogrenci_sayisi?: number;
+  iliskili_konu_basliklari?: string[];
   asamalar?: Asama[];
   etkinlikler?: Etkinlik[];
   malzemeler?: Malzeme[];
-  medya?: Medya[];
-  olcme?: Olcme;
+  medya_onerileri?: Medya[];
+  degerlendirme?: Degerlendirme;
 };
 
 export type Kazanim = {
@@ -58,6 +101,17 @@ export type Kazanim = {
   yas_grubu: string;
   bloom_seviyesi: string;
   kategori: string;
+};
+
+export type AtolyeAlani = {
+  id: string;
+  ad: string;
+  kategori: string;
+  sure_hafta: number;
+  amac: string | null;
+  konu_basliklari: string[];
+  kitap_ortaokul_url: string | null;
+  kitap_lise_url: string | null;
 };
 
 export type OgretimModeli = {
@@ -83,10 +137,8 @@ export type Plan = {
 };
 
 export const SINIF_DUZEYLERI = [
-  { deger: "4-5", etiket: "4-5. sınıf (9-11 yaş)" },
-  { deger: "6-7", etiket: "6-7. sınıf (11-13 yaş)" },
-  { deger: "8-9", etiket: "8-9. sınıf (13-15 yaş)" },
-  { deger: "10-11", etiket: "10-11. sınıf (15-17 yaş)" },
+  { deger: "ortaokul", etiket: "Ortaokul Seviyesi" },
+  { deger: "lise", etiket: "Lise Seviyesi" },
 ] as const;
 
 export const SINIF_ETIKET: Record<string, string> = Object.fromEntries(
@@ -104,8 +156,12 @@ export const PROGRAM_DONEMI_ETIKET: Record<string, string> = Object.fromEntries(
 
 export const KATEGORI_ETIKET: Record<string, string> = {
   yuz_yuze: "Yüz Yüze Eğitimler",
+  hibrit: "Hibrit Eğitimler",
   cevrim_ici: "Çevrim İçi Eğitimler",
 };
+
+export const KATEGORI_SIRASI = ["yuz_yuze", "hibrit", "cevrim_ici"] as const;
+
 export const DURUMLAR = ["taslak", "denetimde", "onayli"] as const;
 
 export const DURUM_ETIKET: Record<string, string> = {
