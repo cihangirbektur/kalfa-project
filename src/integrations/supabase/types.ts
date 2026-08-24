@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      atolye_alanlari: {
+        Row: {
+          ad: string
+          amac: string | null
+          created_at: string
+          id: string
+          kategori: string
+          kitap_lise_url: string | null
+          kitap_ortaokul_url: string | null
+          konu_basliklari: Json
+          sure_hafta: number
+        }
+        Insert: {
+          ad: string
+          amac?: string | null
+          created_at?: string
+          id?: string
+          kategori?: string
+          kitap_lise_url?: string | null
+          kitap_ortaokul_url?: string | null
+          konu_basliklari?: Json
+          sure_hafta?: number
+        }
+        Update: {
+          ad?: string
+          amac?: string | null
+          created_at?: string
+          id?: string
+          kategori?: string
+          kitap_lise_url?: string | null
+          kitap_ortaokul_url?: string | null
+          konu_basliklari?: Json
+          sure_hafta?: number
+        }
+        Relationships: []
+      }
       denetim_bulgulari: {
         Row: {
           created_at: string
