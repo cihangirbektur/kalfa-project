@@ -178,20 +178,32 @@ export const planUret = createServerFn({ method: "POST" })
 
     const kullaniciMesaji = [
       `ATÖLYE ALANI: ${data.atolye_alani}`,
-      `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`,
+      `PROGRAM: ${data.program ?? "DENEYAP Teknoloji Atölyesi"}`,
+      data.konu_basliklari.length > 0
+        ? `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`
+        : `ALANIN KONU BAŞLIKLARI: tanımlı değil — üretimi tema tanımı üzerinden yap, etkinlikler tema düzeyinde kalsın.`,
       `ALANIN SÜRESİ: ${data.sure_hafta} hafta`,
       `KAZANIM KODU: ${data.kazanim_kodu}`,
       `KAZANIM METNİ: ${data.kazanim_metni}`,
       `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
       `SEVİYE: ${data.seviye}`,
+      `YAŞ ARALIĞI: ${data.yas_araligi ?? "belirtilmedi"}`,
       `ÖĞRETİM MODELİ: ${data.model_adi}`,
-      `MODELİN AŞAMALARI VE SÜRE ORANLARI: ${data.model_asamalari
+      `AŞAMA ŞABLONU: ${data.asama_sablonu ?? data.model_adi}${
+        data.asama_sablonu_kaynagi ? ` (${data.asama_sablonu_kaynagi})` : ""
+      }`,
+      `KURAL PROFİLİ: ${data.kural_profili ?? "KLASIK"}`,
+      `ŞABLONUN AŞAMALARI VE SÜRE ORANLARI: ${data.model_asamalari
         .map((a) => `${a.ad} (%${Math.round((a.oran ?? 0) * 100)} — ${a.amac})`)
         .join(" | ")}`,
       `TOPLAM SÜRE: ${data.toplam_sure} dk`,
       `ÖĞRENCİ SAYISI: ${data.ogrenci_sayisi}`,
       `PROGRAM DÖNEMİ: ${data.program_donemi}`,
     ].join("\n");
+
+    const sistemMetni =
+      SISTEM_TALIMATI +
+      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI);
 
     const cagir = async () => {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -203,12 +215,13 @@ export const planUret = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: "google/gemini-3-flash",
           messages: [
-            { role: "system", content: SISTEM_TALIMATI },
+            { role: "system", content: sistemMetni },
             { role: "user", content: kullaniciMesaji },
           ],
           response_format: { type: "json_object" },
         }),
       });
+
       if (!res.ok) {
         const govde = await res.text();
         if (res.status === 429) throw new Error("Yapay zekâ isteği yoğunluk nedeniyle reddedildi.");
