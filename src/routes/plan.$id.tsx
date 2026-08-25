@@ -274,17 +274,35 @@ function PlanGorunumu() {
           )}
         </div>
         {duzenlenebilir && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={kaydet}>
-              Kaydet
-            </Button>
-            <Button
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-              onClick={denetimeGonder}
-            >
-              Denetime Gönder
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={kaydet} disabled={denetleniyor}>
+                Kaydet
+              </Button>
+              <Button
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                onClick={denetimeGonder}
+                disabled={denetleniyor}
+              >
+                {denetleniyor ? "Plan denetleniyor…" : "Denetime Gönder"}
+              </Button>
+            </div>
+            {denetimHatasi && (
+              <div className="max-w-sm rounded-md border border-destructive/40 bg-destructive/5 p-3 text-right text-xs text-destructive">
+                <p>{denetimHatasi}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={denetimeGonder}
+                  disabled={denetleniyor}
+                >
+                  Tekrar Dene
+                </Button>
+              </div>
+            )}
           </div>
+
         )}
       </div>
 
