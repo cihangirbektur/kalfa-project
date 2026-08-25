@@ -151,7 +151,7 @@ function Havuz() {
                     onClick={() => navigate({ to: "/plan/$id", params: { id: p.id } })}
                   >
                     <TableCell className="font-medium">
-                      {p.icerik?.baslik ?? "Adsız plan"}
+                      {p.icerik?.plan_basligi ?? "Adsız plan"}
                     </TableCell>
                     <TableCell>{k?.atolye_alani ?? "—"}</TableCell>
                     <TableCell>{k?.kod ?? "—"}</TableCell>

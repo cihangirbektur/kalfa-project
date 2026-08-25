@@ -26,8 +26,22 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { useRol } from "@/lib/rol";
-import { SINIF_ETIKET, PROGRAM_DONEMI_ETIKET } from "@/lib/tipler";
-import type { Asama, Kazanim, PlanIcerik, Plan, OgretimModeli } from "@/lib/tipler";
+import {
+  SINIF_ETIKET,
+  PROGRAM_DONEMI_ETIKET,
+  ETKINLIK_TIP_ETIKET,
+  OYUN_TIPLERI,
+} from "@/lib/tipler";
+import type {
+  Asama,
+  Etkinlik,
+  Kazanim,
+  Malzeme,
+  Medya,
+  PlanIcerik,
+  Plan,
+  OgretimModeli,
+} from "@/lib/tipler";
 
 export const Route = createFileRoute("/plan/$id")({
   head: () => ({
@@ -35,7 +49,7 @@ export const Route = createFileRoute("/plan/$id")({
       { title: "Atölye Planı — KALFA" },
       {
         name: "description",
-        content: "5E aşamaları, etkinlikler, malzemeler, medya ve ölçme araçlarıyla atölye planı.",
+        content: "Aşamalar, etkinlikler, malzemeler, medya ve ölçme araçlarıyla atölye planı.",
       },
       { property: "og:title", content: "Atölye Planı — KALFA" },
       {
@@ -46,6 +60,8 @@ export const Route = createFileRoute("/plan/$id")({
   }),
   component: PlanGorunumu,
 });
+
+const sayi = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : Number(v) || 0);
 
 function PlanGorunumu() {
   const { id } = Route.useParams();
@@ -95,7 +111,10 @@ function PlanGorunumu() {
   const duzenlenebilir = rol === "İçerik Uzmanı";
 
   const kaydet = async () => {
-    const { error } = await supabase.from("planlar").update({ icerik }).eq("id", plan.id);
+    const { error } = await supabase
+      .from("planlar")
+      .update({ icerik: icerik as never })
+      .eq("id", plan.id);
     if (error) {
       toast.error("Kaydedilemedi: " + error.message);
       return;
@@ -107,7 +126,7 @@ function PlanGorunumu() {
   const denetimeGonder = async () => {
     const { error } = await supabase
       .from("planlar")
-      .update({ icerik, durum: "denetimde" })
+      .update({ icerik: icerik as never, durum: "denetimde" })
       .eq("id", plan.id);
     if (error) {
       toast.error("Gönderilemedi: " + error.message);
@@ -125,21 +144,61 @@ function PlanGorunumu() {
     });
   };
 
+  const etkinlikGuncelle = (i: number, alan: keyof Etkinlik, deger: unknown) => {
+    setIcerik((o) => {
+      const etkinlikler = [...(o.etkinlikler ?? [])];
+      etkinlikler[i] = { ...etkinlikler[i], [alan]: deger } as Etkinlik;
+      return { ...o, etkinlikler };
+    });
+  };
+
+  const malzemeGuncelle = (i: number, alan: keyof Malzeme, deger: unknown) => {
+    setIcerik((o) => {
+      const malzemeler = [...(o.malzemeler ?? [])];
+      malzemeler[i] = { ...malzemeler[i], [alan]: deger } as Malzeme;
+      return { ...o, malzemeler };
+    });
+  };
+
+  const medyaGuncelle = (i: number, alan: keyof Medya, deger: unknown) => {
+    setIcerik((o) => {
+      const medya_onerileri = [...(o.medya_onerileri ?? [])];
+      medya_onerileri[i] = { ...medya_onerileri[i], [alan]: deger } as Medya;
+      return { ...o, medya_onerileri };
+    });
+  };
+
+  const asamalar = icerik.asamalar ?? [];
+  const etkinlikler = icerik.etkinlikler ?? [];
   const malzemeler = icerik.malzemeler ?? [];
-  const toplamMaliyet = malzemeler.reduce((t, m) => t + m.adet * m.birim_maliyet, 0);
-  const toplamHazirlik = malzemeler.reduce((t, m) => t + m.hazirlik_suresi, 0);
+  const medyalar = icerik.medya_onerileri ?? [];
+  const toplamSure = icerik.toplam_sure_dk ?? plan.toplam_sure;
+  const asamaToplam = asamalar.reduce((t, a) => t + sayi(a.sure_dk), 0);
+  const sureUyumsuz = asamalar.length > 0 && asamaToplam !== toplamSure;
+  const toplamMaliyet = malzemeler.reduce(
+    (t, m) => t + sayi(m.adet) * sayi(m.tahmini_birim_maliyet_tl),
+    0,
+  );
+  const toplamHazirlik = malzemeler.reduce((t, m) => t + sayi(m.hazirlik_suresi_dk), 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
-            {icerik.baslik ?? "Adsız plan"}
+            {icerik.plan_basligi ?? "Adsız plan"}
           </h1>
-          {kazanim && (
+          {kazanim ? (
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{kazanim.kod}</span> — {kazanim.metin}
             </p>
+          ) : (
+            icerik.kazanim && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">{icerik.kazanim.kod}</span> —{" "}
+                {icerik.kazanim.metin}
+              </p>
+            )
           )}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="secondary">{SINIF_ETIKET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
@@ -153,6 +212,16 @@ function PlanGorunumu() {
             <Badge variant="secondary">v{plan.versiyon}</Badge>
             <DurumEtiketi durum={plan.durum} />
           </div>
+          {(icerik.iliskili_konu_basliklari ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs text-muted-foreground">İlişkili konu başlıkları:</span>
+              {(icerik.iliskili_konu_basliklari ?? []).map((k) => (
+                <Badge key={k} className="bg-accent text-accent-foreground">
+                  {k}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         {duzenlenebilir && (
           <div className="flex flex-wrap gap-2">
@@ -164,9 +233,6 @@ function PlanGorunumu() {
               onClick={denetimeGonder}
             >
               Denetime Gönder
-            </Button>
-            <Button variant="outline" onClick={() => toast("Yaş uyarlama sonraki adımda gelecek.")}>
-              Yaş Uyarla
             </Button>
           </div>
         )}
@@ -181,117 +247,179 @@ function PlanGorunumu() {
           <TabsTrigger value="olcme">Ölçme</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="asamalar" className="mt-4">
-          {(icerik.asamalar ?? []).length === 0 ? (
+        <TabsContent value="asamalar" className="mt-4 space-y-3">
+          {sureUyumsuz && (
+            <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              Uyarı: aşama süreleri toplamı {asamaToplam} dk; toplam süre {toplamSure} dk.
+            </p>
+          )}
+          {asamalar.length === 0 ? (
             <Bos metin="Bu planda henüz aşama yok." />
           ) : (
             <Accordion type="multiple" className="space-y-2">
-              {(icerik.asamalar ?? []).map((a, i) => (
-                <AccordionItem
-                  key={i}
-                  value={`a-${i}`}
-                  className="rounded-xl border border-border bg-card px-4"
-                >
-                  <AccordionTrigger className="text-left">
-                    <span className="font-medium">{a.ad}</span>
-                    <span className="ml-auto mr-2 text-xs text-muted-foreground">{a.sure} dk</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-4 pb-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Alan
-                        etiket="Aşama adı"
-                        deger={a.ad}
+              {asamalar.map((a, i) => {
+                const oran = toplamSure ? Math.round((sayi(a.sure_dk) / toplamSure) * 100) : 0;
+                return (
+                  <AccordionItem
+                    key={i}
+                    value={`a-${i}`}
+                    className="rounded-xl border border-border bg-card px-4"
+                  >
+                    <AccordionTrigger className="text-left">
+                      <span className="font-medium">{a.asama}</span>
+                      <span className="ml-auto mr-2 flex items-center gap-2 text-xs text-muted-foreground">
+                        {sureUyumsuz && <span className="text-destructive">süre uyumsuz</span>}
+                        <span>
+                          {sayi(a.sure_dk)} dk · %{oran}
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 pb-4">
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Alan
+                          etiket="Aşama adı"
+                          deger={a.asama ?? ""}
+                          oku={!duzenlenebilir}
+                          degistir={(v) => asamaGuncelle(i, "asama", v)}
+                        />
+                        <Alan
+                          etiket="Süre (dk)"
+                          deger={String(sayi(a.sure_dk))}
+                          oku={!duzenlenebilir}
+                          degistir={(v) => asamaGuncelle(i, "sure_dk", Number(v) || 0)}
+                        />
+                      </div>
+                      <UzunAlan
+                        etiket="Amaç"
+                        deger={a.amac ?? ""}
                         oku={!duzenlenebilir}
-                        degistir={(v) => asamaGuncelle(i, "ad", v)}
+                        degistir={(v) => asamaGuncelle(i, "amac", v)}
                       />
-                      <Alan
-                        etiket="Süre (dk)"
-                        deger={String(a.sure)}
+                      <UzunAlan
+                        etiket="Öğretmen eylemi"
+                        deger={a.ogretmen_eylemi ?? ""}
                         oku={!duzenlenebilir}
-                        degistir={(v) => asamaGuncelle(i, "sure", Number(v) || 0)}
+                        degistir={(v) => asamaGuncelle(i, "ogretmen_eylemi", v)}
                       />
-                    </div>
-                    <UzunAlan
-                      etiket="Amaç"
-                      deger={a.amac}
-                      oku={!duzenlenebilir}
-                      degistir={(v) => asamaGuncelle(i, "amac", v)}
-                    />
-                    <UzunAlan
-                      etiket="Öğretmen eylemi"
-                      deger={a.ogretmen_eylemi}
-                      oku={!duzenlenebilir}
-                      degistir={(v) => asamaGuncelle(i, "ogretmen_eylemi", v)}
-                    />
-                    <UzunAlan
-                      etiket="Öğrenci eylemi"
-                      deger={a.ogrenci_eylemi}
-                      oku={!duzenlenebilir}
-                      degistir={(v) => asamaGuncelle(i, "ogrenci_eylemi", v)}
-                    />
-                    <UzunAlan
-                      etiket="Tetikleyici sorular (her satıra bir soru)"
-                      deger={(a.tetikleyici_sorular ?? []).join("\n")}
-                      oku={!duzenlenebilir}
-                      degistir={(v) =>
-                        asamaGuncelle(i, "tetikleyici_sorular", v.split("\n").filter(Boolean))
-                      }
-                    />
-                    <UzunAlan
-                      etiket="Beklenen kavram yanılgıları (her satıra bir madde)"
-                      deger={(a.kavram_yanilgilari ?? []).join("\n")}
-                      oku={!duzenlenebilir}
-                      degistir={(v) =>
-                        asamaGuncelle(i, "kavram_yanilgilari", v.split("\n").filter(Boolean))
-                      }
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+                      <UzunAlan
+                        etiket="Öğrenci eylemi"
+                        deger={a.ogrenci_eylemi ?? ""}
+                        oku={!duzenlenebilir}
+                        degistir={(v) => asamaGuncelle(i, "ogrenci_eylemi", v)}
+                      />
+                      <UzunAlan
+                        etiket="Tetikleyici sorular (her satıra bir soru)"
+                        deger={(a.tetikleyici_sorular ?? []).join("\n")}
+                        oku={!duzenlenebilir}
+                        degistir={(v) =>
+                          asamaGuncelle(i, "tetikleyici_sorular", v.split("\n").filter(Boolean))
+                        }
+                      />
+                      <div className="space-y-2">
+                        <Label>Kavram yanılgıları (yanılgı → nasıl ele alınacak)</Label>
+                        {(a.beklenen_kavram_yanilgilari ?? []).length === 0 && (
+                          <p className="text-sm text-muted-foreground">Kayıtlı yanılgı yok.</p>
+                        )}
+                        {(a.beklenen_kavram_yanilgilari ?? []).map((ky, j) => (
+                          <div key={j} className="grid gap-2 rounded-lg bg-muted p-3 md:grid-cols-2">
+                            <Textarea
+                              rows={2}
+                              value={ky.yanilgi ?? ""}
+                              readOnly={!duzenlenebilir}
+                              onChange={(e) => {
+                                const liste = [...(a.beklenen_kavram_yanilgilari ?? [])];
+                                liste[j] = { ...liste[j], yanilgi: e.target.value };
+                                asamaGuncelle(i, "beklenen_kavram_yanilgilari", liste);
+                              }}
+                            />
+                            <Textarea
+                              rows={2}
+                              value={ky.ele_alinma_bicimi ?? ""}
+                              readOnly={!duzenlenebilir}
+                              onChange={(e) => {
+                                const liste = [...(a.beklenen_kavram_yanilgilari ?? [])];
+                                liste[j] = { ...liste[j], ele_alinma_bicimi: e.target.value };
+                                asamaGuncelle(i, "beklenen_kavram_yanilgilari", liste);
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
             </Accordion>
           )}
         </TabsContent>
 
         <TabsContent value="etkinlikler" className="mt-4 space-y-4">
-          {(icerik.etkinlikler ?? []).length === 0 ? (
-            <Bos metin="Bu planda henüz etkinlik yok." />
-          ) : (
-            (icerik.etkinlikler ?? []).map((e, i) => (
-              <Card key={i}>
-                <CardHeader className="flex flex-row flex-wrap items-center gap-2 space-y-0">
-                  <Badge className="bg-accent text-accent-foreground">{e.tip}</Badge>
+          {etkinlikler.length === 0 && <Bos metin="Bu planda henüz etkinlik yok." />}
+          {etkinlikler.map((e, i) => (
+            <Card key={i}>
+              <CardHeader className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className="bg-accent text-accent-foreground">
+                    {ETKINLIK_TIP_ETIKET[e.tip] ?? e.tip}
+                  </Badge>
                   <CardTitle className="text-base">{e.ad}</CardTitle>
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    {e.asama} · {e.sure} dk
-                  </span>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div>
-                    <p className="mb-1 font-medium">Adımlar</p>
-                    <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
-                      {e.adimlar.map((s, j) => (
-                        <li key={j}>{s}</li>
-                      ))}
-                    </ol>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <Badge variant="secondary">Aşama: {e.bagli_asama}</Badge>
+                  <Badge variant="secondary">{sayi(e.sure_dk)} dk</Badge>
+                  {e.bloom_seviyesi && <Badge variant="secondary">{e.bloom_seviyesi}</Badge>}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <UzunAlan
+                  etiket="Adımlar (her satıra bir adım)"
+                  deger={(e.adimlar ?? []).join("\n")}
+                  oku={!duzenlenebilir}
+                  degistir={(v) => etkinlikGuncelle(i, "adimlar", v.split("\n").filter(Boolean))}
+                />
+                <UzunAlan
+                  etiket="Kazanım hizası"
+                  deger={e.kazanim_hizasi ?? ""}
+                  oku={!duzenlenebilir}
+                  degistir={(v) => etkinlikGuncelle(i, "kazanim_hizasi", v)}
+                />
+                <div className="grid gap-2 md:grid-cols-2">
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="font-medium">Destek</p>
+                    <p className="text-muted-foreground">{e.farklilastirma?.destek}</p>
                   </div>
-                  <p className="text-muted-foreground">
-                    <span className="font-medium text-foreground">Kazanım hizası: </span>
-                    {e.kazanim_hizasi}
-                  </p>
-                  <div className="grid gap-2 md:grid-cols-2">
-                    <div className="rounded-lg bg-muted p-3">
-                      <p className="font-medium">Destek</p>
-                      <p className="text-muted-foreground">{e.farklilastirma?.destek}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted p-3">
-                      <p className="font-medium">Zenginleştirme</p>
-                      <p className="text-muted-foreground">{e.farklilastirma?.zenginlestirme}</p>
-                    </div>
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="font-medium">Zenginleştirme</p>
+                    <p className="text-muted-foreground">{e.farklilastirma?.zenginlestirme}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+                </div>
+                {(OYUN_TIPLERI as readonly string[]).includes(e.tip) && e.oyun_yapisi && (
+                  <div className="rounded-xl border border-accent/40 bg-accent/5 p-4">
+                    <p className="mb-2 font-medium">Oyun yapısı</p>
+                    <dl className="grid gap-2 text-sm md:grid-cols-2">
+                      <Satir baslik="Oyuncu sayısı" deger={e.oyun_yapisi.oyuncu_sayisi} />
+                      <Satir baslik="Bileşenler" deger={e.oyun_yapisi.bilesenler} />
+                      <Satir
+                        baslik="Kart / parça tipleri"
+                        deger={(e.oyun_yapisi.kart_veya_parca_tipleri ?? []).join(", ")}
+                      />
+                      <Satir baslik="Kazanma koşulu" deger={e.oyun_yapisi.kazanma_kosulu} />
+                    </dl>
+                    {(e.oyun_yapisi.tur_akisi ?? []).length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium">Tur akışı</p>
+                        <ol className="list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
+                          {(e.oyun_yapisi.tur_akisi ?? []).map((t, j) => (
+                            <li key={j}>{t}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </TabsContent>
 
         <TabsContent value="malzemeler" className="mt-4">
@@ -317,13 +445,63 @@ function PlanGorunumu() {
                     </TableRow>
                   )}
                   {malzemeler.map((m, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="font-medium">{m.ad}</TableCell>
-                      <TableCell>{m.adet}</TableCell>
-                      <TableCell>{m.birim_maliyet}</TableCell>
-                      <TableCell>{m.hazirlik_suresi}</TableCell>
-                      <TableCell>{m.guvenlik_notu}</TableCell>
-                      <TableCell>{m.alternatif}</TableCell>
+                    <TableRow key={i} className={m.guvenlik_notu ? "bg-destructive/5" : undefined}>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input
+                            value={m.ad ?? ""}
+                            readOnly={!duzenlenebilir}
+                            onChange={(ev) => malzemeGuncelle(i, "ad", ev.target.value)}
+                          />
+                          {m.basilabilir_mi && <Badge variant="secondary">Basılabilir</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="w-20"
+                          value={String(m.adet ?? "")}
+                          readOnly={!duzenlenebilir}
+                          onChange={(ev) => malzemeGuncelle(i, "adet", ev.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="w-24"
+                          value={String(sayi(m.tahmini_birim_maliyet_tl))}
+                          readOnly={!duzenlenebilir}
+                          onChange={(ev) =>
+                            malzemeGuncelle(i, "tahmini_birim_maliyet_tl", Number(ev.target.value) || 0)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          className="w-20"
+                          value={String(sayi(m.hazirlik_suresi_dk))}
+                          readOnly={!duzenlenebilir}
+                          onChange={(ev) =>
+                            malzemeGuncelle(i, "hazirlik_suresi_dk", Number(ev.target.value) || 0)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell
+                        className={m.guvenlik_notu ? "font-medium text-destructive" : undefined}
+                      >
+                        <Textarea
+                          rows={2}
+                          value={m.guvenlik_notu ?? ""}
+                          readOnly={!duzenlenebilir}
+                          onChange={(ev) => malzemeGuncelle(i, "guvenlik_notu", ev.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Textarea
+                          rows={2}
+                          value={m.alternatif ?? ""}
+                          readOnly={!duzenlenebilir}
+                          onChange={(ev) => malzemeGuncelle(i, "alternatif", ev.target.value)}
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -331,7 +509,7 @@ function PlanGorunumu() {
               <div className="mt-4 flex flex-wrap gap-6 text-sm">
                 <span>
                   <span className="text-muted-foreground">Toplam maliyet: </span>
-                  <span className="font-medium">{toplamMaliyet} TL</span>
+                  <span className="font-medium">{toplamMaliyet.toFixed(2)} TL</span>
                 </span>
                 <span>
                   <span className="text-muted-foreground">Toplam hazırlık süresi: </span>
@@ -342,60 +520,114 @@ function PlanGorunumu() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="medya" className="mt-4">
+        <TabsContent value="medya" className="mt-4 space-y-4">
+          {(["basili", "dijital"] as const).map((kat) => {
+            const grup = medyalar
+              .map((m, i) => ({ m, i }))
+              .filter(({ m }) => (m.kategori ?? "dijital").toLowerCase().includes(kat));
+            return (
+              <Card key={kat}>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {kat === "basili" ? "Basılı materyaller" : "Dijital materyaller"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tip</TableHead>
+                        <TableHead>Kategori</TableHead>
+                        <TableHead>Açıklama</TableHead>
+                        <TableHead>Arama terimi</TableHead>
+                        <TableHead>Aşama</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {grup.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-muted-foreground">
+                            Bu grupta öneri yok.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {grup.map(({ m, i }) => (
+                        <TableRow key={i}>
+                          <TableCell>{m.tip}</TableCell>
+                          <TableCell>{m.kategori}</TableCell>
+                          <TableCell>
+                            <Textarea
+                              rows={2}
+                              value={m.aciklama ?? ""}
+                              readOnly={!duzenlenebilir}
+                              onChange={(ev) => medyaGuncelle(i, "aciklama", ev.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{m.arama_terimi}</TableCell>
+                          <TableCell>{m.kullanilacak_asama}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="olcme" className="mt-4 space-y-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader>
+              <CardTitle className="text-base">Biçimlendirici değerlendirme</CardTitle>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tip</TableHead>
-                    <TableHead>Açıklama</TableHead>
-                    <TableHead>Arama terimi</TableHead>
-                    <TableHead>Kullanılacak aşama</TableHead>
+                    <TableHead className="w-48">Aşama</TableHead>
+                    <TableHead>Soru</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(icerik.medya ?? []).length === 0 && (
+                  {(icerik.degerlendirme?.bicimlendirici ?? []).length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-muted-foreground">
-                        Medya önerisi yok.
+                      <TableCell colSpan={2} className="text-muted-foreground">
+                        Biçimlendirici soru yok.
                       </TableCell>
                     </TableRow>
                   )}
-                  {(icerik.medya ?? []).map((m, i) => (
+                  {(icerik.degerlendirme?.bicimlendirici ?? []).map((b, i) => (
                     <TableRow key={i}>
-                      <TableCell>{m.tip}</TableCell>
-                      <TableCell>{m.aciklama}</TableCell>
-                      <TableCell className="text-muted-foreground">{m.arama_terimi}</TableCell>
-                      <TableCell>{m.asama}</TableCell>
+                      <TableCell className="font-medium">{b.asama}</TableCell>
+                      <TableCell>{b.soru}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="olcme" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Biçimlendirici sorular</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                {(icerik.olcme?.bicimlendirici_sorular ?? []).map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-                {!icerik.olcme && <li>Ölçme aracı henüz üretilmedi.</li>}
-              </ul>
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Düzey belirleyici performans görevi</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {icerik.olcme?.performans_gorevi ?? "—"}
+            <CardContent>
+              <Textarea
+                rows={4}
+                readOnly={!duzenlenebilir}
+                value={icerik.degerlendirme?.duzey_belirleyici?.gorev ?? ""}
+                onChange={(e) =>
+                  setIcerik((o) => ({
+                    ...o,
+                    degerlendirme: {
+                      bicimlendirici: o.degerlendirme?.bicimlendirici ?? [],
+                      duzey_belirleyici: {
+                        gorev: e.target.value,
+                        rubrik: o.degerlendirme?.duzey_belirleyici?.rubrik ?? [],
+                      },
+                    },
+                  }))
+                }
+              />
             </CardContent>
           </Card>
           <Card>
@@ -413,15 +645,15 @@ function PlanGorunumu() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(icerik.olcme?.rubrik ?? []).map((r, i) => (
+                  {(icerik.degerlendirme?.duzey_belirleyici?.rubrik ?? []).map((r, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{r.kriter}</TableCell>
-                      <TableCell>{r.puan3}</TableCell>
-                      <TableCell>{r.puan2}</TableCell>
-                      <TableCell>{r.puan1}</TableCell>
+                      <TableCell>{r["3_puan"]}</TableCell>
+                      <TableCell>{r["2_puan"]}</TableCell>
+                      <TableCell>{r["1_puan"]}</TableCell>
                     </TableRow>
                   ))}
-                  {(icerik.olcme?.rubrik ?? []).length === 0 && (
+                  {(icerik.degerlendirme?.duzey_belirleyici?.rubrik ?? []).length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-muted-foreground">
                         Rubrik yok.
@@ -434,6 +666,15 @@ function PlanGorunumu() {
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function Satir({ baslik, deger }: { baslik: string; deger?: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-muted-foreground">{baslik}</dt>
+      <dd>{deger || "—"}</dd>
     </div>
   );
 }
