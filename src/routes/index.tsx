@@ -424,19 +424,31 @@ function YeniPlan() {
             <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-accent text-accent-foreground">{seciliAlan.ad}</Badge>
+                <Badge variant="secondary">
+                  {seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi"}
+                </Badge>
                 <Badge variant="secondary">{KATEGORI_ETIKET[seciliAlan.kategori]}</Badge>
-                <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
+                {seciliAlan.sure_hafta > 0 && (
+                  <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
+                )}
               </div>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Konu başlıkları
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {(seciliAlan.konu_basliklari ?? []).map((k) => (
-                  <Badge key={k} variant="secondary" className="font-normal">
-                    {k}
-                  </Badge>
-                ))}
-              </div>
+              {(seciliAlan.konu_basliklari ?? []).length > 0 ? (
+                <>
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Konu başlıkları
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(seciliAlan.konu_basliklari ?? []).map((k) => (
+                      <Badge key={k} variant="secondary" className="font-normal">
+                        {k}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">{KONU_BASLIGI_YOK_NOTU}</p>
+              )}
+
             </div>
           )}
 
