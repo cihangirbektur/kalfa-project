@@ -202,8 +202,9 @@ function PlanGorunumu() {
             )
           )}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="secondary">{SINIF_ETIKET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
-            {model && <Badge variant="secondary">Model: {model.ad}</Badge>}
+            <Badge variant="secondary">{SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
+            <Badge variant="secondary">Model: {modelAdi}</Badge>
+
             {plan.program_donemi && (
               <Badge variant="secondary">
                 {PROGRAM_DONEMI_ETIKET[plan.program_donemi] ?? plan.program_donemi}
