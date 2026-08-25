@@ -250,12 +250,16 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {KATEGORI_SIRASI.map((kat) => {
-                  const grup = alanlar.filter((a) => a.kategori === kat);
+                {PROGRAM_SIRASI.map((prog) => {
+                  const grup = alanlar.filter(
+                    (a) => (a.program ?? "DENEYAP Teknoloji Atölyesi") === prog,
+                  );
                   if (grup.length === 0) return null;
                   return (
-                    <SelectGroup key={kat}>
-                      <SelectLabel>{KATEGORI_ETIKET[kat]}</SelectLabel>
+                    <SelectGroup key={prog}>
+                      <SelectLabel>
+                        {PROGRAM_GRUP_ETIKET[prog]} ({grup.length})
+                      </SelectLabel>
                       {grup.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.ad}
@@ -269,7 +273,8 @@ function YeniPlan() {
           </div>
 
           <div className="space-y-2">
-            <Label>Sınıf düzeyi</Label>
+            <Label>Yaş grubu / Düzey</Label>
+
             <Select value={seviye} onValueChange={setSeviye}>
               <SelectTrigger>
                 <SelectValue />
