@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -18,14 +19,20 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { planUret } from "@/lib/uretim.functions";
 import {
   KATEGORI_ETIKET,
+  KATEGORI_SIRASI,
   PROGRAM_DONEMLERI,
+  PROGRAM_DONEMI_ETIKET,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
+  type AtolyeAlani,
   type Kazanim,
   type OgretimModeli,
+  type PlanIcerik,
 } from "@/lib/tipler";
 
 export const Route = createFileRoute("/")({
@@ -35,7 +42,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Kazanım, sınıf düzeyi ve öğretim modeli seçerek DENEYAP atölye planı oluşturun.",
+          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli DENEYAP atölye planı üretin.",
       },
       { property: "og:title", content: "Yeni Atölye Planı — KALFA" },
       {
@@ -49,6 +56,16 @@ export const Route = createFileRoute("/")({
 
 function YeniPlan() {
   const navigate = useNavigate();
+  const uretFn = useServerFn(planUret);
+
+  const { data: alanlar = [] } = useQuery({
+    queryKey: ["atolye_alanlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("atolye_alanlari").select("*").order("ad");
+      if (error) throw error;
+      return data as unknown as AtolyeAlani[];
+    },
+  });
 
   const { data: kazanimlar = [] } = useQuery({
     queryKey: ["kazanimlar"],
@@ -68,41 +85,35 @@ function YeniPlan() {
     },
   });
 
-  const [alan, setAlan] = useState("");
+  const [alanId, setAlanId] = useState("");
   const [kazanimId, setKazanimId] = useState("");
-  const [sinif, setSinif] = useState<string>("6-7");
+  const [seviye, setSeviye] = useState<string>("ortaokul");
   const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
   const [modelId, setModelId] = useState("");
   const [sure, setSure] = useState("90");
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
   const [arama, setArama] = useState("");
   const [acik, setAcik] = useState(false);
-  const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [uretiliyor, setUretiliyor] = useState(false);
+  const [hata, setHata] = useState(false);
 
-  // 5E varsayılan olarak seçili gelsin
   useEffect(() => {
     if (modelId) return;
     const varsayilan = modeller.find((m) => m.ad === "5E");
     if (varsayilan) setModelId(varsayilan.id);
   }, [modeller, modelId]);
 
-  const alanGruplari = useMemo(() => {
-    const gruplar: Record<string, string[]> = { yuz_yuze: [], cevrim_ici: [] };
-    for (const k of kazanimlar) {
-      const g = gruplar[k.kategori] ?? (gruplar[k.kategori] = []);
-      if (!g.includes(k.atolye_alani)) g.push(k.atolye_alani);
-    }
-    return gruplar;
-  }, [kazanimlar]);
+  const seciliAlan = alanlar.find((a) => a.id === alanId);
 
-  const alanaGoreKazanimlar = useMemo(
-    () => kazanimlar.filter((k) => !alan || k.atolye_alani === alan),
-    [kazanimlar, alan],
-  );
   const filtreliKazanimlar = useMemo(
-    () => alanaGoreKazanimlar.filter((k) => k.yas_grubu === sinif),
-    [alanaGoreKazanimlar, sinif],
+    () =>
+      kazanimlar.filter(
+        (k) =>
+          k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
+      ),
+    [kazanimlar, seviye, seciliAlan],
   );
+
   const aramaliKazanimlar = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase("tr");
     if (!q) return filtreliKazanimlar;
@@ -115,56 +126,66 @@ function YeniPlan() {
   const secili = kazanimlar.find((k) => k.id === kazanimId);
   const seciliModel = modeller.find((m) => m.id === modelId);
 
-  // Seçili kazanım artık filtreye uymuyorsa temizle
   useEffect(() => {
     if (kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId)) setKazanimId("");
   }, [filtreliKazanimlar, kazanimId]);
 
   const uret = async () => {
-    if (!kazanimId || !modelId) {
-      toast.error("Kazanım ve öğretim modeli seçilmelidir.");
+    if (!seciliAlan || !secili || !seciliModel) {
+      toast.error("Atölye alanı, kazanım ve öğretim modeli seçilmelidir.");
       return;
     }
-    setKaydediliyor(true);
+    setHata(false);
+    setUretiliyor(true);
     const toplamSure = Number(sure) || 90;
-    const asamalar = (seciliModel?.asamalar ?? []).map((a) => ({
-      ad: a.ad,
-      sure: Math.round(toplamSure * (a.oran ?? 0)),
-      amac: a.amac,
-      ogretmen_eylemi: "",
-      ogrenci_eylemi: "",
-      tetikleyici_sorular: [],
-      kavram_yanilgilari: [],
-    }));
-    const { data, error } = await supabase
-      .from("planlar")
-      .insert({
-        kazanim_id: kazanimId,
-        model_id: modelId,
-        yas_grubu: sinif,
-        program_donemi: donem,
-        toplam_sure: toplamSure,
-        ogrenci_sayisi: Number(ogrenciSayisi) || 20,
-        durum: "taslak",
-        versiyon: 1,
-        icerik: {
-          baslik: secili ? `${secili.kod} atölyesi` : "Yeni atölye planı",
-          ozet: "İçerik henüz üretilmedi. Yapay zekâ üretimi sonraki adımda eklenecek.",
-          asamalar,
-          etkinlikler: [],
-          malzemeler: [],
-          medya: [],
+    const sayi = Number(ogrenciSayisi) || 20;
+    try {
+      const cevap = await uretFn({
+        data: {
+          atolye_alani: seciliAlan.ad,
+          konu_basliklari: seciliAlan.konu_basliklari ?? [],
+          sure_hafta: seciliAlan.sure_hafta ?? 0,
+          kazanim_kodu: secili.kod,
+          kazanim_metni: secili.metin,
+          bloom_seviyesi: secili.bloom_seviyesi,
+          seviye: SINIF_ETIKET[seviye] ?? seviye,
+          model_adi: seciliModel.ad,
+          model_asamalari: (seciliModel.asamalar ?? []).map((a) => ({
+            ad: a.ad,
+            oran: a.oran ?? 0,
+            amac: a.amac ?? "",
+          })),
+          toplam_sure: toplamSure,
+          ogrenci_sayisi: sayi,
+          program_donemi: PROGRAM_DONEMI_ETIKET[donem] ?? donem,
         },
-      })
-      .select("id")
-      .single();
-    setKaydediliyor(false);
-    if (error) {
-      toast.error("Plan oluşturulamadı: " + error.message);
-      return;
+      });
+      const icerik = JSON.parse(cevap as string) as PlanIcerik;
+      const { data, error } = await supabase
+        .from("planlar")
+        .insert({
+          kazanim_id: kazanimId,
+          model_id: modelId,
+          yas_grubu: seviye,
+          program_donemi: donem,
+          toplam_sure: toplamSure,
+          ogrenci_sayisi: sayi,
+          durum: "taslak",
+          versiyon: 1,
+          icerik: icerik as never,
+        })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      toast.success("Atölye planı üretildi.");
+      navigate({ to: "/plan/$id", params: { id: data.id } });
+    } catch (e) {
+      console.error("[plan üretimi]", e);
+      setHata(true);
+      toast.error("Üretim başarısız, tekrar deneyin.");
+    } finally {
+      setUretiliyor(false);
     }
-    toast.success("Plan taslağı oluşturuldu.");
-    navigate({ to: "/plan/$id", params: { id: data.id } });
   };
 
   return (
@@ -173,7 +194,7 @@ function YeniPlan() {
         <h1 className="text-2xl font-semibold tracking-tight">Yeni Plan</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Kazanım ve kısıtları belirleyin; sistem seçilen öğretim modeline uygun atölye planını
-          hazırlasın.
+          üretsin.
         </p>
       </div>
 
@@ -185,9 +206,9 @@ function YeniPlan() {
           <div className="space-y-2">
             <Label>Atölye alanı</Label>
             <Select
-              value={alan}
+              value={alanId}
               onValueChange={(v) => {
-                setAlan(v);
+                setAlanId(v);
                 setKazanimId("");
               }}
             >
@@ -195,25 +216,27 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {(["yuz_yuze", "cevrim_ici"] as const).map((kat) =>
-                  (alanGruplari[kat] ?? []).length ? (
+                {KATEGORI_SIRASI.map((kat) => {
+                  const grup = alanlar.filter((a) => a.kategori === kat);
+                  if (grup.length === 0) return null;
+                  return (
                     <SelectGroup key={kat}>
                       <SelectLabel>{KATEGORI_ETIKET[kat]}</SelectLabel>
-                      {(alanGruplari[kat] ?? []).map((a) => (
-                        <SelectItem key={a} value={a}>
-                          {a}
+                      {grup.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.ad}
                         </SelectItem>
                       ))}
                     </SelectGroup>
-                  ) : null,
-                )}
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label>Sınıf düzeyi</Label>
-            <Select value={sinif} onValueChange={setSinif}>
+            <Select value={seviye} onValueChange={setSeviye}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -262,7 +285,7 @@ function YeniPlan() {
                 <div className="max-h-80 overflow-y-auto p-1">
                   {filtreliKazanimlar.length === 0 ? (
                     <p className="p-3 text-sm text-muted-foreground">
-                      Bu sınıf düzeyi için tanımlı kazanım bulunmuyor.
+                      Bu alan ve seviye için tanımlı kazanım bulunmuyor.
                     </p>
                   ) : aramaliKazanimlar.length === 0 ? (
                     <p className="p-3 text-sm text-muted-foreground">Eşleşen kazanım yok.</p>
@@ -289,11 +312,6 @@ function YeniPlan() {
                 </div>
               </PopoverContent>
             </Popover>
-            {filtreliKazanimlar.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Bu sınıf düzeyi için tanımlı kazanım bulunmuyor.
-              </p>
-            )}
           </div>
 
           <div className="space-y-2">
@@ -366,6 +384,26 @@ function YeniPlan() {
             />
           </div>
 
+          {seciliAlan && (
+            <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-accent text-accent-foreground">{seciliAlan.ad}</Badge>
+                <Badge variant="secondary">{KATEGORI_ETIKET[seciliAlan.kategori]}</Badge>
+                <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
+              </div>
+              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Konu başlıkları
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(seciliAlan.konu_basliklari ?? []).map((k) => (
+                  <Badge key={k} variant="secondary" className="font-normal">
+                    {k}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {secili && (
             <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
               <div className="flex flex-wrap items-center gap-2">
@@ -380,14 +418,44 @@ function YeniPlan() {
             </div>
           )}
 
-          <div className="md:col-span-2">
+          <div className="space-y-3 md:col-span-2">
             <Button
               className="bg-accent text-accent-foreground hover:bg-accent/90"
               onClick={uret}
-              disabled={kaydediliyor}
+              disabled={uretiliyor}
             >
-              {kaydediliyor ? "Üretiliyor…" : "Planı Üret"}
+              {uretiliyor ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Atölye planı üretiliyor…
+                </span>
+              ) : (
+                "Planı Üret"
+              )}
             </Button>
+
+            {uretiliyor && (
+              <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 text-sm">
+                <p className="flex items-center gap-2 font-medium">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Atölye planı üretiliyor…
+                </p>
+                <p className="mt-1 text-muted-foreground">
+                  Bu işlem 20-60 saniye sürebilir. Lütfen sayfayı kapatmayın.
+                </p>
+              </div>
+            )}
+
+            {hata && !uretiliyor && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">
+                <span className="font-medium text-destructive">
+                  Üretim başarısız, tekrar deneyin.
+                </span>
+                <Button variant="outline" size="sm" onClick={uret}>
+                  Tekrar Dene
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
