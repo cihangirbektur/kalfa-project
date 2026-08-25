@@ -27,11 +27,13 @@ import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { useRol } from "@/lib/rol";
 import {
-  SINIF_ETIKET,
+  SINIF_ROZET,
   PROGRAM_DONEMI_ETIKET,
   ETKINLIK_TIP_ETIKET,
+  OGRETIM_SECENEK_ETIKET,
   OYUN_TIPLERI,
 } from "@/lib/tipler";
+
 import type {
   Asama,
   Etkinlik,
