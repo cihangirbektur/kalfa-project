@@ -353,44 +353,41 @@ function YeniPlan() {
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <Label>Öğretim modeli</Label>
-            <Select value={modelId} onValueChange={setModelId}>
+            <Select value={ogretim} onValueChange={setOgretim}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {modeller.map((m) => {
-                  const asamaSayisi = (m.asamalar ?? []).length;
-                  if (asamaSayisi === 0) {
-                    return (
-                      <TooltipProvider key={m.id}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SelectItem value={m.id} disabled>
-                                {m.ad} (aşamalar tanımlanmayı bekliyor)
-                              </SelectItem>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            Bilim Türkiye&apos;nin özgün öğretim modeli. Aşama tanımları Eğitim
-                            Ar-Ge Koordinatörlüğü&apos;nden temin edildiğinde sisteme tek kayıt
-                            olarak eklenecektir; yazılım değişikliği gerekmez.
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  }
-                  return (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.ad}
-                    </SelectItem>
-                  );
-                })}
+                {OGRETIM_SECENEKLERI.map((o) => (
+                  <SelectItem key={o.deger} value={o.deger}>
+                    {o.etiket}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+
+            <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
+              {seciliOgretim.profil === "GIPSCI" ? (
+                <>
+                  <p>{GIPSCI_BILGI_NOTU}</p>
+                  <p className="mt-2">
+                    Kaynak: {seciliProfil?.kaynak ?? "T3 Vakfı Araştırma Raporu, Şubat 2026"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">{seciliSablon?.ad}</p>
+                  <p className="mt-1">
+                    {(seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ")}
+                  </p>
+                  <p className="mt-2">Kaynak: {seciliSablon?.kaynak ?? "—"}</p>
+                </>
+              )}
+            </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Program dönemi</Label>
