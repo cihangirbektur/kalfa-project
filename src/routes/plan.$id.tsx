@@ -254,6 +254,9 @@ function PlanGorunumu() {
           <TabsTrigger value="malzemeler">Malzemeler</TabsTrigger>
           <TabsTrigger value="medya">Medya</TabsTrigger>
           <TabsTrigger value="olcme">Ölçme</TabsTrigger>
+          <TabsTrigger value="sorukartlari">Soru Kartları</TabsTrigger>
+          <TabsTrigger value="urun">Ürün</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="asamalar" className="mt-4 space-y-3">
