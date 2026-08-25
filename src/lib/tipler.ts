@@ -260,5 +260,40 @@ export const DURUMLAR = ["taslak", "denetimde", "onayli"] as const;
 export const DURUM_ETIKET: Record<string, string> = {
   taslak: "Taslak",
   denetimde: "Denetimde",
+  revizyon_istendi: "Revizyon İstendi",
   onayli: "Onaylı",
+};
+
+export type DenetimBulgusu = {
+  id: string;
+  plan_id: string | null;
+  kural_no: number;
+  seviye: string;
+  gecti: boolean;
+  mesaj: string | null;
+  kanit_alintisi: string | null;
+  ilgili_asama: string | null;
+  oneri: string | null;
+  created_at: string;
+};
+
+export const KURAL_METINLERI: Record<number, string> = {
+  1: "Öğrenci kendi bulgusunu, öğretmen açıklamasından önce anlatıyor mu?",
+  2: "Keşfetme aşaması toplam sürenin en az %25'i mi?",
+  3: "Yaratma/Açıklama aşaması toplam sürenin en az %20'si mi?",
+  4: "Öğretmen eylemleri cevabı vermek yerine soruyla mı yönlendiriyor?",
+  5: "Plan somut bir öğrenci ürünüyle bitiyor mu?",
+  6: "Her etkinlik kazanımla açıkça hizalı mı?",
+  7: "Riskli malzemede güvenlik notu var mı?",
+  8: "Aşama süreleri toplamı toplam süreye eşit mi?",
+  9: "En az 4 merak soru kartı var mı ve hipotez kurmaya çağırıyor mu?",
+  10: "Biçimlendirici değerlendirme ders boyuna dağılmış mı?",
+  11: "Süreç odaklı değerlendirme var mı?",
+  12: "Kavram yanılgıları öngörülmüş mü?",
+};
+
+export const SEVIYE_ETIKET: Record<string, string> = {
+  kritik: "Kritik",
+  uyari: "Uyarı",
+  bilgi: "Bilgi",
 };

@@ -1,5 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { planDenetle } from "@/lib/denetim.functions";
 import { useQuery } from "@tanstack/react-query";
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -69,6 +72,11 @@ const sayi = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 
 function PlanGorunumu() {
   const { id } = Route.useParams();
   const { rol } = useRol();
+  const navigate = useNavigate();
+  const denetle = useServerFn(planDenetle);
+  const [denetleniyor, setDenetleniyor] = useState(false);
+  const [denetimHatasi, setDenetimHatasi] = useState<string | null>(null);
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["plan", id],
@@ -132,17 +140,50 @@ function PlanGorunumu() {
   };
 
   const denetimeGonder = async () => {
-    const { error } = await supabase
-      .from("planlar")
-      .update({ icerik: icerik as never, durum: "denetimde" })
-      .eq("id", plan.id);
-    if (error) {
-      toast.error("Gönderilemedi: " + error.message);
-      return;
+    setDenetimHatasi(null);
+    setDenetleniyor(true);
+    try {
+      const { error: kaydetHata } = await supabase
+        .from("planlar")
+        .update({ icerik: icerik as never })
+        .eq("id", plan.id);
+      if (kaydetHata) throw new Error(kaydetHata.message);
+
+      const bulgular = await denetle({
+        data: {
+          plan_id: plan.id,
+          kural_profili: plan.kural_profili ?? "KLASIK",
+          toplam_sure: icerik.toplam_sure_dk ?? plan.toplam_sure,
+          seviye: plan.yas_grubu,
+          plan_json: JSON.stringify(icerik),
+        },
+      });
+      if (!bulgular || bulgular.length === 0)
+        throw new Error("Denetçi bulgu üretmedi; sonuç kaydedilmedi.");
+
+      await supabase.from("denetim_bulgulari").delete().eq("plan_id", plan.id);
+      const { error: yazHata } = await supabase
+        .from("denetim_bulgulari")
+        .insert(bulgular as never);
+      if (yazHata) throw new Error(yazHata.message);
+
+      const { error: durumHata } = await supabase
+        .from("planlar")
+        .update({ durum: "denetimde" })
+        .eq("id", plan.id);
+      if (durumHata) throw new Error(durumHata.message);
+
+      toast.success("Denetim tamamlandı.");
+      navigate({ to: "/denetim", search: { plan: plan.id } });
+    } catch (e) {
+      const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
+      setDenetimHatasi(mesaj);
+      toast.error(mesaj);
+    } finally {
+      setDenetleniyor(false);
     }
-    toast.success("Plan denetime gönderildi.");
-    refetch();
   };
+
 
   const asamaGuncelle = (i: number, alan: keyof Asama, deger: unknown) => {
     setIcerik((o) => {
@@ -233,17 +274,35 @@ function PlanGorunumu() {
           )}
         </div>
         {duzenlenebilir && (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={kaydet}>
-              Kaydet
-            </Button>
-            <Button
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-              onClick={denetimeGonder}
-            >
-              Denetime Gönder
-            </Button>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={kaydet} disabled={denetleniyor}>
+                Kaydet
+              </Button>
+              <Button
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+                onClick={denetimeGonder}
+                disabled={denetleniyor}
+              >
+                {denetleniyor ? "Plan denetleniyor…" : "Denetime Gönder"}
+              </Button>
+            </div>
+            {denetimHatasi && (
+              <div className="max-w-sm rounded-md border border-destructive/40 bg-destructive/5 p-3 text-right text-xs text-destructive">
+                <p>{denetimHatasi}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={denetimeGonder}
+                  disabled={denetleniyor}
+                >
+                  Tekrar Dene
+                </Button>
+              </div>
+            )}
           </div>
+
         )}
       </div>
 

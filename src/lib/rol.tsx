@@ -17,7 +17,7 @@ const EGITMEN: MenuOgesi = { yol: "/egitmen", ad: "Eğitmen Görünümü" };
 const RAPORLAR: MenuOgesi = { yol: "/raporlar", ad: "Raporlar" };
 
 export const ROL_MENULERI: Record<Rol, MenuOgesi[]> = {
-  "İçerik Uzmanı": [YENI_PLAN, HAVUZ],
+  "İçerik Uzmanı": [YENI_PLAN, HAVUZ, DENETIM],
   "Pedagojik Uzman": [DENETIM, HAVUZ],
   Eğitmen: [EGITMEN],
   "Eğitim Yöneticisi": [HAVUZ, RAPORLAR],
