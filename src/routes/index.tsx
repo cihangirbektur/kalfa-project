@@ -92,11 +92,29 @@ function YeniPlan() {
     },
   });
 
+  const { data: sablonlar = [] } = useQuery({
+    queryKey: ["asama_sablonlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("asama_sablonlari").select("*").order("kod");
+      if (error) throw error;
+      return data as unknown as AsamaSablonu[];
+    },
+  });
+
+  const { data: profiller = [] } = useQuery({
+    queryKey: ["kural_profilleri"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("kural_profilleri").select("*").order("kod");
+      if (error) throw error;
+      return data as unknown as KuralProfili[];
+    },
+  });
+
   const [alanId, setAlanId] = useState("");
   const [kazanimId, setKazanimId] = useState("");
   const [seviye, setSeviye] = useState<string>("ortaokul");
   const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
-  const [modelId, setModelId] = useState("");
+  const [ogretim, setOgretim] = useState<string>("GIPSCI");
   const [sure, setSure] = useState("90");
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
   const [arama, setArama] = useState("");
@@ -104,11 +122,10 @@ function YeniPlan() {
   const [uretiliyor, setUretiliyor] = useState(false);
   const [hata, setHata] = useState(false);
 
-  useEffect(() => {
-    if (modelId) return;
-    const varsayilan = modeller.find((m) => m.ad === "5E");
-    if (varsayilan) setModelId(varsayilan.id);
-  }, [modeller, modelId]);
+  const seciliOgretim =
+    OGRETIM_SECENEKLERI.find((o) => o.deger === ogretim) ?? OGRETIM_SECENEKLERI[0];
+  const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
+  const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
   const seciliAlan = alanlar.find((a) => a.id === alanId);
 
@@ -116,7 +133,8 @@ function YeniPlan() {
     () =>
       kazanimlar.filter(
         (k) =>
-          k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
+          (seviye === "bilimtr_karma" || k.yas_grubu === seviye) &&
+          (!seciliAlan || k.atolye_alani === seciliAlan.ad),
       ),
     [kazanimlar, seviye, seciliAlan],
   );
@@ -131,11 +149,11 @@ function YeniPlan() {
   }, [filtreliKazanimlar, arama]);
 
   const secili = kazanimlar.find((k) => k.id === kazanimId);
-  const seciliModel = modeller.find((m) => m.id === modelId);
 
   useEffect(() => {
     if (kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId)) setKazanimId("");
   }, [filtreliKazanimlar, kazanimId]);
+
 
   const uret = async () => {
     if (!seciliAlan || !secili || !seciliModel) {
