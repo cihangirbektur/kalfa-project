@@ -156,7 +156,7 @@ function YeniPlan() {
 
 
   const uret = async () => {
-    if (!seciliAlan || !secili || !seciliModel) {
+    if (!seciliAlan || !secili || !seciliSablon) {
       toast.error("Atölye alanı, kazanım ve öğretim modeli seçilmelidir.");
       return;
     }
@@ -164,18 +164,24 @@ function YeniPlan() {
     setUretiliyor(true);
     const toplamSure = Number(sure) || 90;
     const sayi = Number(ogrenciSayisi) || 20;
+    const eskiModel = modeller.find((m) => m.ad === seciliOgretim.sablon);
     try {
       const cevap = await uretFn({
         data: {
           atolye_alani: seciliAlan.ad,
+          program: seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi",
           konu_basliklari: seciliAlan.konu_basliklari ?? [],
           sure_hafta: seciliAlan.sure_hafta ?? 0,
           kazanim_kodu: secili.kod,
           kazanim_metni: secili.metin,
           bloom_seviyesi: secili.bloom_seviyesi,
           seviye: SINIF_ETIKET[seviye] ?? seviye,
-          model_adi: seciliModel.ad,
-          model_asamalari: (seciliModel.asamalar ?? []).map((a) => ({
+          yas_araligi: SINIF_YAS[seviye] ?? "",
+          model_adi: seciliOgretim.etiket,
+          asama_sablonu: seciliSablon.kod,
+          asama_sablonu_kaynagi: seciliSablon.kaynak ?? "",
+          kural_profili: seciliOgretim.profil,
+          model_asamalari: (seciliSablon.asamalar ?? []).map((a) => ({
             ad: a.ad,
             oran: a.oran ?? 0,
             amac: a.amac ?? "",
@@ -190,7 +196,9 @@ function YeniPlan() {
         .from("planlar")
         .insert({
           kazanim_id: kazanimId,
-          model_id: modelId,
+          model_id: eskiModel?.id ?? null,
+          asama_sablonu: seciliOgretim.sablon,
+          kural_profili: seciliOgretim.profil,
           yas_grubu: seviye,
           program_donemi: donem,
           toplam_sure: toplamSure,
@@ -198,6 +206,7 @@ function YeniPlan() {
           durum: "taslak",
           versiyon: 1,
           icerik: icerik as never,
+
         })
         .select("id")
         .single();
