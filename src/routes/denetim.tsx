@@ -150,7 +150,7 @@ function Denetim() {
           </p>
         </div>
         <Select
-          value={seciliId}
+          value={seciliId ?? ""}
           onValueChange={(v) => navigate({ to: "/denetim", search: { plan: v } })}
         >
           <SelectTrigger className="w-full sm:w-80">
