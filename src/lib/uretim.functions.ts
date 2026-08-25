@@ -166,7 +166,7 @@ export const planUret = createServerFn({ method: "POST" })
       };
       const metin = govde.choices?.[0]?.message?.content ?? "";
       if (!metin) throw new Error("Boş yanıt");
-      return jsonAyikla(metin) as Record<string, unknown>;
+      return JSON.stringify(jsonAyikla(metin));
     };
 
     try {
