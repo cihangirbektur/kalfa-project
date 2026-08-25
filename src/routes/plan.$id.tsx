@@ -132,17 +132,50 @@ function PlanGorunumu() {
   };
 
   const denetimeGonder = async () => {
-    const { error } = await supabase
-      .from("planlar")
-      .update({ icerik: icerik as never, durum: "denetimde" })
-      .eq("id", plan.id);
-    if (error) {
-      toast.error("Gönderilemedi: " + error.message);
-      return;
+    setDenetimHatasi(null);
+    setDenetleniyor(true);
+    try {
+      const { error: kaydetHata } = await supabase
+        .from("planlar")
+        .update({ icerik: icerik as never })
+        .eq("id", plan.id);
+      if (kaydetHata) throw new Error(kaydetHata.message);
+
+      const bulgular = await denetle({
+        data: {
+          plan_id: plan.id,
+          kural_profili: plan.kural_profili ?? "KLASIK",
+          toplam_sure: icerik.toplam_sure_dk ?? plan.toplam_sure,
+          seviye: plan.yas_grubu,
+          plan_json: JSON.stringify(icerik),
+        },
+      });
+      if (!bulgular || bulgular.length === 0)
+        throw new Error("Denetçi bulgu üretmedi; sonuç kaydedilmedi.");
+
+      await supabase.from("denetim_bulgulari").delete().eq("plan_id", plan.id);
+      const { error: yazHata } = await supabase
+        .from("denetim_bulgulari")
+        .insert(bulgular as never);
+      if (yazHata) throw new Error(yazHata.message);
+
+      const { error: durumHata } = await supabase
+        .from("planlar")
+        .update({ durum: "denetimde" })
+        .eq("id", plan.id);
+      if (durumHata) throw new Error(durumHata.message);
+
+      toast.success("Denetim tamamlandı.");
+      navigate({ to: "/denetim", search: { plan: plan.id } });
+    } catch (e) {
+      const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
+      setDenetimHatasi(mesaj);
+      toast.error(mesaj);
+    } finally {
+      setDenetleniyor(false);
     }
-    toast.success("Plan denetime gönderildi.");
-    refetch();
   };
+
 
   const asamaGuncelle = (i: number, alan: keyof Asama, deger: unknown) => {
     setIcerik((o) => {
