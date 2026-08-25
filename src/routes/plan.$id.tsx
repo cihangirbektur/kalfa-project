@@ -112,6 +112,11 @@ function PlanGorunumu() {
 
   const { plan, kazanim, model } = data;
   const duzenlenebilir = rol === "İçerik Uzmanı";
+  const modelAdi =
+    plan.kural_profili === "GIPSCI"
+      ? "GiPSci"
+      : (OGRETIM_SECENEK_ETIKET[plan.asama_sablonu ?? ""] ?? model?.ad ?? "—");
+
 
   const kaydet = async () => {
     const { error } = await supabase
