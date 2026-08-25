@@ -18,22 +18,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { planUret } from "@/lib/uretim.functions";
 import {
+  GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
-  KATEGORI_SIRASI,
+  KONU_BASLIGI_YOK_NOTU,
+  OGRETIM_SECENEKLERI,
   PROGRAM_DONEMLERI,
   PROGRAM_DONEMI_ETIKET,
+  PROGRAM_GRUP_ETIKET,
+  PROGRAM_SIRASI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
+  SINIF_YAS,
+  type AsamaSablonu,
   type AtolyeAlani,
   type Kazanim,
+  type KuralProfili,
   type OgretimModeli,
   type PlanIcerik,
 } from "@/lib/tipler";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
