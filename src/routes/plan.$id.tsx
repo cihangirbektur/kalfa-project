@@ -69,6 +69,11 @@ const sayi = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 
 function PlanGorunumu() {
   const { id } = Route.useParams();
   const { rol } = useRol();
+  const navigate = useNavigate();
+  const denetle = useServerFn(planDenetle);
+  const [denetleniyor, setDenetleniyor] = useState(false);
+  const [denetimHatasi, setDenetimHatasi] = useState<string | null>(null);
+
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["plan", id],
