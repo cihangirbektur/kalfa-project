@@ -74,30 +74,85 @@ BEKLENEN JSON:
       "kategori": "basili | dijital", "aciklama": "", "arama_terimi": "",
       "kullanilacak_asama": "" }
   ],
+  "merak_tetikleyicileri": {
+    "soru_kartlari": ["", "", "", ""],
+    "merak_kutusu_notu": ""
+  },
+  "urun_odakli_cikti": {
+    "urun_adi": "",
+    "urun_tipi": "fiziksel_nesne | dijital_icerik | bilimsel_sunum",
+    "ogrenci_ne_uretecek": "",
+    "degerlendirme_olcutu": ""
+  },
   "degerlendirme": {
     "bicimlendirici": [ { "asama": "", "soru": "" } ],
+    "surec_odakli": [ { "ne_gozlemlenecek": "", "yansitici_arac": "" } ],
     "duzey_belirleyici": { "gorev": "",
       "rubrik": [ { "kriter": "", "3_puan": "", "2_puan": "", "1_puan": "" } ] }
   }
 }
 
 En az 3 etkinlik üret, tiplerini çeşitlendir, en az biri oyun tipi olsun.
-oyun_yapisi yalnızca oyun tiplerinde dolu, diğerlerinde null.`;
+oyun_yapisi yalnızca oyun tiplerinde dolu, diğerlerinde null.
+
+EK ALAN KURALLARI:
+- merak_tetikleyicileri.soru_kartlari en az 4 adet olsun. Her kart, öğrencinin
+  sergide veya atölye girişinde okuyup kendi hipotezini kurmasını sağlayan kısa
+  bir soru olsun; cevabı içermesin.
+- merak_kutusu_notu, öğrencinin cevabını yazıp kutuya atacağı tek satırlık
+  yönlendirme olsun.
+- urun_odakli_cikti somut olsun; "öğrendiklerini paylaşır" gibi belirsiz ifade yasak.
+- degerlendirme.surec_odakli en az 2 madde içersin ve ürünü değil, öğrencinin
+  düşünme sürecini gözlemlesin.
+
+SÜRE KURALLARI (her plan için geçerli):
+- Yaratma/Açıklama aşaması toplam sürenin en az %20'si olsun.
+- Keşfetme aşaması toplam sürenin en az %25'i olsun.
+
+AŞAMA İSİMLERİ: yalnızca sana verilen AŞAMA ŞABLONU'ndaki adları kullan,
+verilen sırayla. Kendi aşama adı uydurma.
+
+YAŞ UYUMU: dil ve soyutlama seviyesi verilen yaş aralığına uygun olsun.
+9–11 yaş için somut, elle tutulur, tek adımlı örnekler; 13–15 yaş için
+değişkenli ve çok adımlı düşünme; 6–14 karma grup seçildiyse en küçük yaşa
+göre anlaşılır, en büyüğe göre zenginleştirilebilir olsun.`;
+
+const GIPSCI_KURALLARI = `
+KURAL PROFİLİ: GIPSCI — Rehberli Sorgulama, Ürün Odaklı Bilim.
+Şu üç kısıtı ihlal etme:
+1. Öğretmen eylemi hiçbir aşamada cevabı doğrudan vermesin; yapılandırılmış
+   soru sorarak yönlendirsin. "Açıklar", "anlatır", "gösterir" yerine "sorar",
+   "yönlendirir", "fark ettirir" fiilleriyle yaz.
+2. Her plan somut bir öğrenci ürünüyle bitsin. urun_odakli_cikti asla boş
+   kalmasın ve belirsiz olmasın.
+3. En az 4 merak soru kartı ve bir merak kutusu notu üret.
+Üçüncü aşama Yaratma/Açıklama sırasıyla işlensin — yaratma öndedir.`;
+
+const KLASIK_KURALLARI = `
+KURAL PROFİLİ: KLASIK. Yalnızca aşama sırası ve süre dengesi denetlenir.
+merak_tetikleyicileri ve urun_odakli_cikti isteğe bağlıdır; uygun düşüyorsa
+doldur, düşmüyorsa null bırak.`;
 
 const girdiSemasi = z.object({
   atolye_alani: z.string(),
+  program: z.string().optional(),
   konu_basliklari: z.array(z.string()),
   sure_hafta: z.number(),
   kazanim_kodu: z.string(),
   kazanim_metni: z.string(),
   bloom_seviyesi: z.string(),
   seviye: z.string(),
+  yas_araligi: z.string().optional(),
   model_adi: z.string(),
+  asama_sablonu: z.string().optional(),
+  asama_sablonu_kaynagi: z.string().optional(),
+  kural_profili: z.string().optional(),
   model_asamalari: z.array(z.object({ ad: z.string(), oran: z.number(), amac: z.string() })),
   toplam_sure: z.number(),
   ogrenci_sayisi: z.number(),
   program_donemi: z.string(),
 });
+
 
 function jsonAyikla(metin: string): unknown {
   const temiz = metin
@@ -123,20 +178,32 @@ export const planUret = createServerFn({ method: "POST" })
 
     const kullaniciMesaji = [
       `ATÖLYE ALANI: ${data.atolye_alani}`,
-      `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`,
+      `PROGRAM: ${data.program ?? "DENEYAP Teknoloji Atölyesi"}`,
+      data.konu_basliklari.length > 0
+        ? `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`
+        : `ALANIN KONU BAŞLIKLARI: tanımlı değil — üretimi tema tanımı üzerinden yap, etkinlikler tema düzeyinde kalsın.`,
       `ALANIN SÜRESİ: ${data.sure_hafta} hafta`,
       `KAZANIM KODU: ${data.kazanim_kodu}`,
       `KAZANIM METNİ: ${data.kazanim_metni}`,
       `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
       `SEVİYE: ${data.seviye}`,
+      `YAŞ ARALIĞI: ${data.yas_araligi ?? "belirtilmedi"}`,
       `ÖĞRETİM MODELİ: ${data.model_adi}`,
-      `MODELİN AŞAMALARI VE SÜRE ORANLARI: ${data.model_asamalari
+      `AŞAMA ŞABLONU: ${data.asama_sablonu ?? data.model_adi}${
+        data.asama_sablonu_kaynagi ? ` (${data.asama_sablonu_kaynagi})` : ""
+      }`,
+      `KURAL PROFİLİ: ${data.kural_profili ?? "KLASIK"}`,
+      `ŞABLONUN AŞAMALARI VE SÜRE ORANLARI: ${data.model_asamalari
         .map((a) => `${a.ad} (%${Math.round((a.oran ?? 0) * 100)} — ${a.amac})`)
         .join(" | ")}`,
       `TOPLAM SÜRE: ${data.toplam_sure} dk`,
       `ÖĞRENCİ SAYISI: ${data.ogrenci_sayisi}`,
       `PROGRAM DÖNEMİ: ${data.program_donemi}`,
     ].join("\n");
+
+    const sistemMetni =
+      SISTEM_TALIMATI +
+      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI);
 
     const cagir = async () => {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -148,12 +215,13 @@ export const planUret = createServerFn({ method: "POST" })
         body: JSON.stringify({
           model: "google/gemini-3-flash",
           messages: [
-            { role: "system", content: SISTEM_TALIMATI },
+            { role: "system", content: sistemMetni },
             { role: "user", content: kullaniciMesaji },
           ],
           response_format: { type: "json_object" },
         }),
       });
+
       if (!res.ok) {
         const govde = await res.text();
         if (res.status === 429) throw new Error("Yapay zekâ isteği yoğunluk nedeniyle reddedildi.");

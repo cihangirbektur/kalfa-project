@@ -18,22 +18,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { planUret } from "@/lib/uretim.functions";
 import {
+  GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
-  KATEGORI_SIRASI,
+  KONU_BASLIGI_YOK_NOTU,
+  OGRETIM_SECENEKLERI,
   PROGRAM_DONEMLERI,
   PROGRAM_DONEMI_ETIKET,
+  PROGRAM_GRUP_ETIKET,
+  PROGRAM_SIRASI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
+  SINIF_YAS,
+  type AsamaSablonu,
   type AtolyeAlani,
   type Kazanim,
+  type KuralProfili,
   type OgretimModeli,
   type PlanIcerik,
 } from "@/lib/tipler";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -85,11 +92,29 @@ function YeniPlan() {
     },
   });
 
+  const { data: sablonlar = [] } = useQuery({
+    queryKey: ["asama_sablonlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("asama_sablonlari").select("*").order("kod");
+      if (error) throw error;
+      return data as unknown as AsamaSablonu[];
+    },
+  });
+
+  const { data: profiller = [] } = useQuery({
+    queryKey: ["kural_profilleri"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("kural_profilleri").select("*").order("kod");
+      if (error) throw error;
+      return data as unknown as KuralProfili[];
+    },
+  });
+
   const [alanId, setAlanId] = useState("");
   const [kazanimId, setKazanimId] = useState("");
   const [seviye, setSeviye] = useState<string>("ortaokul");
   const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
-  const [modelId, setModelId] = useState("");
+  const [ogretim, setOgretim] = useState<string>("GIPSCI");
   const [sure, setSure] = useState("90");
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
   const [arama, setArama] = useState("");
@@ -97,11 +122,10 @@ function YeniPlan() {
   const [uretiliyor, setUretiliyor] = useState(false);
   const [hata, setHata] = useState(false);
 
-  useEffect(() => {
-    if (modelId) return;
-    const varsayilan = modeller.find((m) => m.ad === "5E");
-    if (varsayilan) setModelId(varsayilan.id);
-  }, [modeller, modelId]);
+  const seciliOgretim =
+    OGRETIM_SECENEKLERI.find((o) => o.deger === ogretim) ?? OGRETIM_SECENEKLERI[0];
+  const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
+  const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
   const seciliAlan = alanlar.find((a) => a.id === alanId);
 
@@ -109,7 +133,8 @@ function YeniPlan() {
     () =>
       kazanimlar.filter(
         (k) =>
-          k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
+          (seviye === "bilimtr_karma" || k.yas_grubu === seviye) &&
+          (!seciliAlan || k.atolye_alani === seciliAlan.ad),
       ),
     [kazanimlar, seviye, seciliAlan],
   );
@@ -124,14 +149,14 @@ function YeniPlan() {
   }, [filtreliKazanimlar, arama]);
 
   const secili = kazanimlar.find((k) => k.id === kazanimId);
-  const seciliModel = modeller.find((m) => m.id === modelId);
 
   useEffect(() => {
     if (kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId)) setKazanimId("");
   }, [filtreliKazanimlar, kazanimId]);
 
+
   const uret = async () => {
-    if (!seciliAlan || !secili || !seciliModel) {
+    if (!seciliAlan || !secili || !seciliSablon) {
       toast.error("Atölye alanı, kazanım ve öğretim modeli seçilmelidir.");
       return;
     }
@@ -139,18 +164,24 @@ function YeniPlan() {
     setUretiliyor(true);
     const toplamSure = Number(sure) || 90;
     const sayi = Number(ogrenciSayisi) || 20;
+    const eskiModel = modeller.find((m) => m.ad === seciliOgretim.sablon);
     try {
       const cevap = await uretFn({
         data: {
           atolye_alani: seciliAlan.ad,
+          program: seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi",
           konu_basliklari: seciliAlan.konu_basliklari ?? [],
           sure_hafta: seciliAlan.sure_hafta ?? 0,
           kazanim_kodu: secili.kod,
           kazanim_metni: secili.metin,
           bloom_seviyesi: secili.bloom_seviyesi,
           seviye: SINIF_ETIKET[seviye] ?? seviye,
-          model_adi: seciliModel.ad,
-          model_asamalari: (seciliModel.asamalar ?? []).map((a) => ({
+          yas_araligi: SINIF_YAS[seviye] ?? "",
+          model_adi: seciliOgretim.etiket,
+          asama_sablonu: seciliSablon.kod,
+          asama_sablonu_kaynagi: seciliSablon.kaynak ?? "",
+          kural_profili: seciliOgretim.profil,
+          model_asamalari: (seciliSablon.asamalar ?? []).map((a) => ({
             ad: a.ad,
             oran: a.oran ?? 0,
             amac: a.amac ?? "",
@@ -165,7 +196,9 @@ function YeniPlan() {
         .from("planlar")
         .insert({
           kazanim_id: kazanimId,
-          model_id: modelId,
+          model_id: eskiModel?.id ?? null,
+          asama_sablonu: seciliOgretim.sablon,
+          kural_profili: seciliOgretim.profil,
           yas_grubu: seviye,
           program_donemi: donem,
           toplam_sure: toplamSure,
@@ -173,6 +206,7 @@ function YeniPlan() {
           durum: "taslak",
           versiyon: 1,
           icerik: icerik as never,
+
         })
         .select("id")
         .single();
@@ -216,12 +250,16 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {KATEGORI_SIRASI.map((kat) => {
-                  const grup = alanlar.filter((a) => a.kategori === kat);
+                {PROGRAM_SIRASI.map((prog) => {
+                  const grup = alanlar.filter(
+                    (a) => (a.program ?? "DENEYAP Teknoloji Atölyesi") === prog,
+                  );
                   if (grup.length === 0) return null;
                   return (
-                    <SelectGroup key={kat}>
-                      <SelectLabel>{KATEGORI_ETIKET[kat]}</SelectLabel>
+                    <SelectGroup key={prog}>
+                      <SelectLabel>
+                        {PROGRAM_GRUP_ETIKET[prog]} ({grup.length})
+                      </SelectLabel>
                       {grup.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.ad}
@@ -235,7 +273,8 @@ function YeniPlan() {
           </div>
 
           <div className="space-y-2">
-            <Label>Sınıf düzeyi</Label>
+            <Label>Yaş grubu / Düzey</Label>
+
             <Select value={seviye} onValueChange={setSeviye}>
               <SelectTrigger>
                 <SelectValue />
@@ -314,44 +353,41 @@ function YeniPlan() {
             </Popover>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 md:col-span-2">
             <Label>Öğretim modeli</Label>
-            <Select value={modelId} onValueChange={setModelId}>
+            <Select value={ogretim} onValueChange={setOgretim}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {modeller.map((m) => {
-                  const asamaSayisi = (m.asamalar ?? []).length;
-                  if (asamaSayisi === 0) {
-                    return (
-                      <TooltipProvider key={m.id}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SelectItem value={m.id} disabled>
-                                {m.ad} (aşamalar tanımlanmayı bekliyor)
-                              </SelectItem>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
-                            Bilim Türkiye&apos;nin özgün öğretim modeli. Aşama tanımları Eğitim
-                            Ar-Ge Koordinatörlüğü&apos;nden temin edildiğinde sisteme tek kayıt
-                            olarak eklenecektir; yazılım değişikliği gerekmez.
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  }
-                  return (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.ad}
-                    </SelectItem>
-                  );
-                })}
+                {OGRETIM_SECENEKLERI.map((o) => (
+                  <SelectItem key={o.deger} value={o.deger}>
+                    {o.etiket}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+
+            <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
+              {seciliOgretim.profil === "GIPSCI" ? (
+                <>
+                  <p>{GIPSCI_BILGI_NOTU}</p>
+                  <p className="mt-2">
+                    Kaynak: {seciliProfil?.kaynak ?? "T3 Vakfı Araştırma Raporu, Şubat 2026"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">{seciliSablon?.ad}</p>
+                  <p className="mt-1">
+                    {(seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ")}
+                  </p>
+                  <p className="mt-2">Kaynak: {seciliSablon?.kaynak ?? "—"}</p>
+                </>
+              )}
+            </div>
           </div>
+
 
           <div className="space-y-2">
             <Label>Program dönemi</Label>
@@ -388,19 +424,31 @@ function YeniPlan() {
             <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-accent text-accent-foreground">{seciliAlan.ad}</Badge>
+                <Badge variant="secondary">
+                  {seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi"}
+                </Badge>
                 <Badge variant="secondary">{KATEGORI_ETIKET[seciliAlan.kategori]}</Badge>
-                <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
+                {seciliAlan.sure_hafta > 0 && (
+                  <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
+                )}
               </div>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Konu başlıkları
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {(seciliAlan.konu_basliklari ?? []).map((k) => (
-                  <Badge key={k} variant="secondary" className="font-normal">
-                    {k}
-                  </Badge>
-                ))}
-              </div>
+              {(seciliAlan.konu_basliklari ?? []).length > 0 ? (
+                <>
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Konu başlıkları
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(seciliAlan.konu_basliklari ?? []).map((k) => (
+                      <Badge key={k} variant="secondary" className="font-normal">
+                        {k}
+                      </Badge>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="mt-3 text-xs text-muted-foreground">{KONU_BASLIGI_YOK_NOTU}</p>
+              )}
+
             </div>
           )}
 

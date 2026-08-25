@@ -27,11 +27,13 @@ import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { useRol } from "@/lib/rol";
 import {
-  SINIF_ETIKET,
+  SINIF_ROZET,
   PROGRAM_DONEMI_ETIKET,
   ETKINLIK_TIP_ETIKET,
+  OGRETIM_SECENEK_ETIKET,
   OYUN_TIPLERI,
 } from "@/lib/tipler";
+
 import type {
   Asama,
   Etkinlik,
@@ -110,6 +112,11 @@ function PlanGorunumu() {
 
   const { plan, kazanim, model } = data;
   const duzenlenebilir = rol === "İçerik Uzmanı";
+  const modelAdi =
+    plan.kural_profili === "GIPSCI"
+      ? "GiPSci"
+      : (OGRETIM_SECENEK_ETIKET[plan.asama_sablonu ?? ""] ?? model?.ad ?? "—");
+
 
   const kaydet = async () => {
     const { error } = await supabase
@@ -202,8 +209,9 @@ function PlanGorunumu() {
             )
           )}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <Badge variant="secondary">{SINIF_ETIKET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
-            {model && <Badge variant="secondary">Model: {model.ad}</Badge>}
+            <Badge variant="secondary">{SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
+            <Badge variant="secondary">Model: {modelAdi}</Badge>
+
             {plan.program_donemi && (
               <Badge variant="secondary">
                 {PROGRAM_DONEMI_ETIKET[plan.program_donemi] ?? plan.program_donemi}
@@ -246,6 +254,9 @@ function PlanGorunumu() {
           <TabsTrigger value="malzemeler">Malzemeler</TabsTrigger>
           <TabsTrigger value="medya">Medya</TabsTrigger>
           <TabsTrigger value="olcme">Ölçme</TabsTrigger>
+          <TabsTrigger value="sorukartlari">Soru Kartları</TabsTrigger>
+          <TabsTrigger value="urun">Ürün</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="asamalar" className="mt-4 space-y-3">
@@ -665,8 +676,104 @@ function PlanGorunumu() {
               </Table>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Süreç odaklı değerlendirme</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ne gözlemlenecek</TableHead>
+                    <TableHead>Yansıtıcı araç</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(icerik.degerlendirme?.surec_odakli ?? []).length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-muted-foreground">
+                        Süreç odaklı değerlendirme maddesi yok.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {(icerik.degerlendirme?.surec_odakli ?? []).map((s, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{s.ne_gozlemlenecek}</TableCell>
+                      <TableCell>{s.yansitici_arac}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sorukartlari" className="mt-4 space-y-4">
+          {(icerik.merak_tetikleyicileri?.soru_kartlari ?? []).length === 0 ? (
+            <Bos metin="Bu planda merak soru kartı yok." />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {(icerik.merak_tetikleyicileri?.soru_kartlari ?? []).map((s, i) => (
+                <div
+                  key={i}
+                  className="flex min-h-32 flex-col justify-between rounded-xl border-2 border-dashed border-accent/50 bg-card p-5 print:break-inside-avoid"
+                >
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Merak kartı {i + 1}
+                  </span>
+                  <p className="mt-3 text-base font-medium">{s}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {icerik.merak_tetikleyicileri?.merak_kutusu_notu && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Merak kutusu notu</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground">
+                {icerik.merak_tetikleyicileri.merak_kutusu_notu}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="urun" className="mt-4">
+          {!icerik.urun_odakli_cikti ? (
+            <Bos metin="Bu planda ürün odaklı çıktı tanımlı değil." />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {icerik.urun_odakli_cikti.urun_adi || "Ürün"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div className="flex flex-wrap gap-2">
+                  {icerik.urun_odakli_cikti.urun_tipi && (
+                    <Badge className="bg-accent text-accent-foreground">
+                      {icerik.urun_odakli_cikti.urun_tipi}
+                    </Badge>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Öğrenci ne üretecek
+                  </p>
+                  <p className="mt-1">{icerik.urun_odakli_cikti.ogrenci_ne_uretecek || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Değerlendirme ölçütü
+                  </p>
+                  <p className="mt-1">{icerik.urun_odakli_cikti.degerlendirme_olcutu || "—"}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
+
     </div>
   );
 }

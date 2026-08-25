@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      asama_sablonlari: {
+        Row: {
+          ad: string
+          asamalar: Json
+          created_at: string
+          id: string
+          kaynak: string | null
+          kod: string
+        }
+        Insert: {
+          ad: string
+          asamalar?: Json
+          created_at?: string
+          id?: string
+          kaynak?: string | null
+          kod: string
+        }
+        Update: {
+          ad?: string
+          asamalar?: Json
+          created_at?: string
+          id?: string
+          kaynak?: string | null
+          kod?: string
+        }
+        Relationships: []
+      }
       atolye_alanlari: {
         Row: {
           ad: string
@@ -24,6 +51,7 @@ export type Database = {
           kitap_lise_url: string | null
           kitap_ortaokul_url: string | null
           konu_basliklari: Json
+          program: string
           sure_hafta: number
         }
         Insert: {
@@ -35,6 +63,7 @@ export type Database = {
           kitap_lise_url?: string | null
           kitap_ortaokul_url?: string | null
           konu_basliklari?: Json
+          program?: string
           sure_hafta?: number
         }
         Update: {
@@ -46,6 +75,7 @@ export type Database = {
           kitap_lise_url?: string | null
           kitap_ortaokul_url?: string | null
           konu_basliklari?: Json
+          program?: string
           sure_hafta?: number
         }
         Relationships: []
@@ -159,6 +189,33 @@ export type Database = {
         }
         Relationships: []
       }
+      kural_profilleri: {
+        Row: {
+          aciklama: string | null
+          ad: string
+          created_at: string
+          id: string
+          kaynak: string | null
+          kod: string
+        }
+        Insert: {
+          aciklama?: string | null
+          ad: string
+          created_at?: string
+          id?: string
+          kaynak?: string | null
+          kod: string
+        }
+        Update: {
+          aciklama?: string | null
+          ad?: string
+          created_at?: string
+          id?: string
+          kaynak?: string | null
+          kod?: string
+        }
+        Relationships: []
+      }
       ogretim_modelleri: {
         Row: {
           ad: string
@@ -185,12 +242,14 @@ export type Database = {
       }
       planlar: {
         Row: {
+          asama_sablonu: string
           butce: number
           created_at: string
           durum: string
           icerik: Json
           id: string
           kazanim_id: string | null
+          kural_profili: string
           model_id: string | null
           ogrenci_sayisi: number
           program_donemi: string
@@ -199,12 +258,14 @@ export type Database = {
           yas_grubu: string
         }
         Insert: {
+          asama_sablonu?: string
           butce?: number
           created_at?: string
           durum?: string
           icerik?: Json
           id?: string
           kazanim_id?: string | null
+          kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
           program_donemi?: string
@@ -213,12 +274,14 @@ export type Database = {
           yas_grubu: string
         }
         Update: {
+          asama_sablonu?: string
           butce?: number
           created_at?: string
           durum?: string
           icerik?: Json
           id?: string
           kazanim_id?: string | null
+          kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
           program_donemi?: string
