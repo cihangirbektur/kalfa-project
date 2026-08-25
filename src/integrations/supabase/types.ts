@@ -89,6 +89,7 @@ export type Database = {
           kanit_alintisi: string | null
           kural_no: number
           mesaj: string | null
+          oneri: string | null
           plan_id: string | null
           seviye: string
         }
@@ -100,6 +101,7 @@ export type Database = {
           kanit_alintisi?: string | null
           kural_no: number
           mesaj?: string | null
+          oneri?: string | null
           plan_id?: string | null
           seviye: string
         }
@@ -111,6 +113,7 @@ export type Database = {
           kanit_alintisi?: string | null
           kural_no?: number
           mesaj?: string | null
+          oneri?: string | null
           plan_id?: string | null
           seviye?: string
         }
