@@ -70,13 +70,28 @@ export type Medya = {
   kullanilacak_asama: string;
 };
 
+export type SurecOdakli = { ne_gozlemlenecek: string; yansitici_arac: string };
+
 export type Degerlendirme = {
   bicimlendirici: { asama: string; soru: string }[];
   duzey_belirleyici: {
     gorev: string;
     rubrik: { kriter: string; "3_puan": string; "2_puan": string; "1_puan": string }[];
   };
+  surec_odakli?: SurecOdakli[];
 };
+
+export type MerakTetikleyicileri = {
+  soru_kartlari?: string[];
+  merak_kutusu_notu?: string;
+} | null;
+
+export type UrunOdakliCikti = {
+  urun_adi?: string;
+  urun_tipi?: string;
+  ogrenci_ne_uretecek?: string;
+  degerlendirme_olcutu?: string;
+} | null;
 
 export type PlanIcerik = {
   plan_basligi?: string;
@@ -91,7 +106,10 @@ export type PlanIcerik = {
   malzemeler?: Malzeme[];
   medya_onerileri?: Medya[];
   degerlendirme?: Degerlendirme;
+  merak_tetikleyicileri?: MerakTetikleyicileri;
+  urun_odakli_cikti?: UrunOdakliCikti;
 };
+
 
 export type Kazanim = {
   id: string;
