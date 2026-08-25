@@ -36,6 +36,7 @@ import type {
   Asama,
   Etkinlik,
   Kazanim,
+  KavramYanilgisi,
   Malzeme,
   Medya,
   PlanIcerik,
@@ -328,7 +329,7 @@ function PlanGorunumu() {
                               readOnly={!duzenlenebilir}
                               onChange={(e) => {
                                 const liste = [...(a.beklenen_kavram_yanilgilari ?? [])];
-                                liste[j] = { ...liste[j], yanilgi: e.target.value };
+                                liste[j] = { ...liste[j], yanilgi: e.target.value } as KavramYanilgisi;
                                 asamaGuncelle(i, "beklenen_kavram_yanilgilari", liste);
                               }}
                             />
@@ -338,7 +339,7 @@ function PlanGorunumu() {
                               readOnly={!duzenlenebilir}
                               onChange={(e) => {
                                 const liste = [...(a.beklenen_kavram_yanilgilari ?? [])];
-                                liste[j] = { ...liste[j], ele_alinma_bicimi: e.target.value };
+                                liste[j] = { ...liste[j], ele_alinma_bicimi: e.target.value } as KavramYanilgisi;
                                 asamaGuncelle(i, "beklenen_kavram_yanilgilari", liste);
                               }}
                             />
