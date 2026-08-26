@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   OGRETIM_SECENEK_ETIKET,
+  BILIMTR_YAS_GRUPLARI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
   SINIF_ROZET,
@@ -138,7 +139,7 @@ function Egitmen() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={TUMU}>Seviye: Tümü</SelectItem>
-            {SINIF_DUZEYLERI.map((s) => (
+            {[...SINIF_DUZEYLERI, ...BILIMTR_YAS_GRUPLARI].map((s) => (
               <SelectItem key={s.deger} value={s.deger}>
                 {SINIF_ETIKET[s.deger]}
               </SelectItem>

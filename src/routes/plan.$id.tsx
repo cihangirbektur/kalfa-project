@@ -301,6 +301,31 @@ function PlanGorunumu() {
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{kazanim.kod}</span> — {kazanim.metin}
             </p>
+          ) : icerik.kazanim_turetildi ? (
+            <div className="max-w-2xl space-y-1">
+              <Label className="text-xs text-muted-foreground">
+                Kazanım (konu başlığından türetildi, düzenlenebilir)
+              </Label>
+              <Input
+                value={icerik.kazanim?.metin ?? ""}
+                readOnly={!duzenlenebilir}
+                onChange={(e) =>
+                  setIcerik({
+                    ...icerik,
+                    kazanim: {
+                      kod: icerik.kazanim?.kod ?? (plan.konu_basligi ?? ""),
+                      bloom_seviyesi: icerik.kazanim?.bloom_seviyesi ?? "",
+                      metin: e.target.value,
+                    },
+                  })
+                }
+              />
+              {plan.konu_basligi && (
+                <p className="text-xs text-muted-foreground">
+                  Konu başlığı: {plan.konu_basligi}
+                </p>
+              )}
+            </div>
           ) : (
             icerik.kazanim && (
               <p className="text-sm text-muted-foreground">
@@ -309,6 +334,7 @@ function PlanGorunumu() {
               </p>
             )
           )}
+
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Badge variant="secondary">{SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
             <Badge variant="secondary">Model: {modelAdi}</Badge>

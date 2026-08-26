@@ -167,11 +167,25 @@ KURAL PROFİLİ: KLASIK. Yalnızca aşama sırası ve süre dengesi denetlenir.
 merak_tetikleyicileri ve urun_odakli_cikti isteğe bağlıdır; uygun düşüyorsa
 doldur, düşmüyorsa null bırak.`;
 
+const KAZANIM_TURETME = `
+KAZANIM TÜRETME (Bilim Türkiye): Bu üretimde hazır kazanım metni YOK; sana bir
+KONU BAŞLIĞI verildi. Kazanımı sen türeteceksin ve "kazanim" nesnesine
+yazacaksın. Kurallar:
+- Tek cümle olsun ve gözlemlenebilir bir öğrenci davranışı tanımlasın.
+- Fiil seçimi yaş grubuna uygun olsun: 6-8 yaş → tanır, eşleştirir, gösterir;
+  9-11 yaş → açıklar, karşılaştırır, uygular; 12-14 yaş → tasarlar, analiz
+  eder, değerlendirir.
+- Konu başlığının dışına çıkma.
+- "kazanim.kod" alanına konu başlığının kendisini yaz, "bloom_seviyesi" alanına
+  seçtiğin fiile karşılık gelen Bloom düzeyini yaz.`;
+
 const girdiSemasi = z.object({
   atolye_alani: z.string(),
   program: z.string().optional(),
   konu_basliklari: z.array(z.string()),
   sure_hafta: z.number(),
+  konu_basligi: z.string().optional(),
+  kazanim_turet: z.boolean().optional(),
   kazanim_kodu: z.string(),
   kazanim_metni: z.string(),
   bloom_seviyesi: z.string(),
@@ -186,6 +200,7 @@ const girdiSemasi = z.object({
   ogrenci_sayisi: z.number(),
   program_donemi: z.string(),
 });
+
 
 
 function jsonAyikla(metin: string): unknown {
@@ -217,9 +232,12 @@ export const planUret = createServerFn({ method: "POST" })
         ? `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`
         : `ALANIN KONU BAŞLIKLARI: tanımlı değil — üretimi tema tanımı üzerinden yap, etkinlikler tema düzeyinde kalsın.`,
       `ALANIN SÜRESİ: ${data.sure_hafta} hafta`,
-      `KAZANIM KODU: ${data.kazanim_kodu}`,
-      `KAZANIM METNİ: ${data.kazanim_metni}`,
-      `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
+      data.kazanim_turet
+        ? `SEÇİLEN KONU BAŞLIĞI: ${data.konu_basligi ?? ""}\nKAZANIM: verilmedi — konu başlığından türet.`
+        : `KAZANIM KODU: ${data.kazanim_kodu}`,
+      data.kazanim_turet ? `` : `KAZANIM METNİ: ${data.kazanim_metni}`,
+      data.kazanim_turet ? `` : `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
+
       `SEVİYE: ${data.seviye}`,
       `YAŞ ARALIĞI: ${data.yas_araligi ?? "belirtilmedi"}`,
       `ÖĞRETİM MODELİ: ${data.model_adi}`,
@@ -237,7 +255,9 @@ export const planUret = createServerFn({ method: "POST" })
 
     const sistemMetni =
       SISTEM_TALIMATI +
-      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI);
+      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI) +
+      (data.kazanim_turet ? KAZANIM_TURETME : "");
+
 
     const cagir = async () => {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

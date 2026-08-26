@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
+import { PROGRAM_GRUP_ETIKET, PROGRAM_SIRASI } from "@/lib/tipler";
+import type { AtolyeAlani, DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
 import { bildirimOzeti, bildirimleriCoz } from "@/lib/geribildirim";
 
 export const Route = createFileRoute("/raporlar")({
@@ -64,6 +65,8 @@ function Raporlar() {
     },
   });
 
+  const [acikGrup, setAcikGrup] = useState<Record<string, boolean>>({});
+
   const sahaOzeti = useMemo(() => bildirimOzeti(bildirimleriCoz(bildirimler)), [bildirimler]);
 
 
@@ -81,16 +84,46 @@ function Raporlar() {
     return (kritik / planIdler.size).toFixed(1);
   }, [bulgular]);
 
-  const onayliDagilim = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const k of kazanimlar) m.set(k.atolye_alani, m.get(k.atolye_alani) ?? 0);
+  const { data: alanlar = [] } = useQuery({
+    queryKey: ["atolye_alanlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("atolye_alanlari").select("*").order("ad");
+      if (error) throw error;
+      return data as unknown as AtolyeAlani[];
+    },
+  });
+
+  const programGruplari = useMemo(() => {
+    const sayac = new Map<string, number>();
+    for (const a of alanlar) sayac.set(a.ad, 0);
     for (const p of aktif) {
       if (p.durum !== "onayli") continue;
-      const alan = (p.kazanim_id ? harita.get(p.kazanim_id)?.atolye_alani : null) ?? "Tanımsız";
-      m.set(alan, (m.get(alan) ?? 0) + 1);
+      const alanAdi =
+        (p.atolye_alani_id ? alanlar.find((a) => a.id === p.atolye_alani_id)?.ad : null) ??
+        (p.kazanim_id ? harita.get(p.kazanim_id)?.atolye_alani : null) ??
+        "Tanımsız";
+      sayac.set(alanAdi, (sayac.get(alanAdi) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"));
-  }, [aktif, harita, kazanimlar]);
+    const programAl = (ad: string) =>
+      alanlar.find((a) => a.ad === ad)?.program ?? "DENEYAP Teknoloji Atölyesi";
+    return PROGRAM_SIRASI.map((prog) => {
+      const kayitlar = [...sayac.entries()].filter(([ad]) => programAl(ad) === prog);
+      const dolu = kayitlar
+        .filter(([, n]) => n > 0)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"));
+      const bos = kayitlar
+        .filter(([, n]) => n === 0)
+        .map(([ad]) => ad)
+        .sort((a, b) => a.localeCompare(b, "tr"));
+      return {
+        program: prog,
+        toplam: dolu.reduce((t, [, n]) => t + n, 0),
+        dolu,
+        bos,
+      };
+    }).filter((g) => g.dolu.length + g.bos.length > 0);
+  }, [aktif, harita, alanlar]);
+
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -149,28 +182,57 @@ function Raporlar() {
         <CardHeader>
           <CardTitle className="text-base">Atölye alanına göre onaylı plan dağılımı</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Yükleniyor…</p>
-          ) : onayliDagilim.length === 0 ? (
+          ) : programGruplari.length === 0 ? (
             <p className="text-sm text-muted-foreground">Henüz plan üretilmedi.</p>
           ) : (
-            <ul className="divide-y divide-border text-sm">
-              {onayliDagilim.map(([alan, adet]) => (
-                <li key={alan} className="flex items-center justify-between py-2">
-                  <span>{alan}</span>
-                  <span
-                    className={
-                      adet === 0 ? "font-medium text-destructive" : "font-medium"
-                    }
-                  >
-                    {adet === 0 ? "içerik eksik" : adet}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            programGruplari.map((g) => (
+              <div key={g.program}>
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <h3 className="text-sm font-semibold">
+                    {PROGRAM_GRUP_ETIKET[g.program] ?? g.program}
+                  </h3>
+                  <span className="text-sm text-muted-foreground">{g.toplam} onaylı plan</span>
+                </div>
+                <ul className="divide-y divide-border text-sm">
+                  {g.dolu.map(([alan, adet]) => (
+                    <li key={alan} className="flex items-center justify-between py-2">
+                      <span>{alan}</span>
+                      <span className="font-medium">{adet}</span>
+                    </li>
+                  ))}
+                  {g.bos.length > 0 && (
+                    <li className="py-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAcikGrup((s) => ({ ...s, [g.program]: !s[g.program] }))
+                        }
+                        className="flex w-full items-center justify-between text-left text-muted-foreground hover:text-foreground"
+                      >
+                        <span>Henüz içerik üretilmemiş {g.bos.length} alan</span>
+                        <span className="text-xs">{acikGrup[g.program] ? "Kapat" : "Aç"}</span>
+                      </button>
+                      {acikGrup[g.program] && (
+                        <ul className="mt-2 space-y-1 pl-3 text-muted-foreground">
+                          {g.bos.map((ad) => (
+                            <li key={ad} className="flex items-center justify-between">
+                              <span>{ad}</span>
+                              <span>0 onaylı plan</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ))
           )}
         </CardContent>
+
       </Card>
     </div>
   );

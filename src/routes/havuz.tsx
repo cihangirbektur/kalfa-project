@@ -29,6 +29,7 @@ import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { arsivleyebilirMi, kaliciSilebilirMi, useRol } from "@/lib/rol";
 import {
   DURUM_ETIKET,
+  BILIMTR_YAS_GRUPLARI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
   type Kazanim,
@@ -239,7 +240,7 @@ function Havuz() {
           deger={yas}
           degistir={setYas}
           etiket="Seviye"
-          secenekler={SINIF_DUZEYLERI.map((s) => s.deger)}
+          secenekler={[...SINIF_DUZEYLERI, ...BILIMTR_YAS_GRUPLARI].map((s) => s.deger)}
           etiketle={(v) => SINIF_ETIKET[v] ?? v}
         />
         {yonetici && (
