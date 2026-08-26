@@ -29,8 +29,12 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { GipsciSerit } from "@/components/GipsciSerit";
+import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
 import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
+import { kararEtiketi, onaylananSurum, turSurumleri } from "@/lib/surum";
 import { useRol } from "@/lib/rol";
+
 import {
   SINIF_ROZET,
   PROGRAM_DONEMI_ETIKET,
@@ -214,15 +218,24 @@ function PlanGorunumu() {
         .insert(bulgular.map((b) => ({ ...b, tur_id: tur.id })) as never);
       if (yazHata) throw new Error(yazHata.message);
 
+      // Sürüm yalnızca revizyon sonrası tekrar gönderimde artar.
+      const revizyonSonrasi = plan.durum === "revizyon_istendi";
+      const yeniVersiyon = revizyonSonrasi ? (plan.versiyon ?? 1) + 1 : (plan.versiyon ?? 1);
       const { error: durumHata } = await supabase
         .from("planlar")
-        .update({ durum: "denetimde" })
+        .update({ durum: "denetimde", versiyon: yeniVersiyon })
         .eq("id", plan.id);
       if (durumHata) throw new Error(durumHata.message);
 
       denetimQ.refetch();
-      toast.success(`Denetim tamamlandı (${yeniTurNo}. tur).`);
+      refetch();
+      toast.success(
+        revizyonSonrasi
+          ? `Denetim tamamlandı (${yeniTurNo}. tur) · plan v${yeniVersiyon} olarak gönderildi.`
+          : `Denetim tamamlandı (${yeniTurNo}. tur).`,
+      );
       navigate({ to: "/denetim", search: { plan: plan.id } });
+
 
     } catch (e) {
       const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
@@ -308,7 +321,17 @@ function PlanGorunumu() {
             <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
             <Badge variant="secondary">v{plan.versiyon}</Badge>
             <DurumEtiketi durum={plan.durum} />
+            {plan.arsivlendi && <DurumEtiketi durum="arsivlendi" />}
           </div>
+          {plan.durum === "onayli" && (
+            <p className="text-xs font-medium text-emerald-700">
+              v{onaylananSurum(denetimQ.data?.turlar ?? []) ?? plan.versiyon} olarak onaylandı
+              {plan.onay_tarihi
+                ? ` · ${new Date(plan.onay_tarihi).toLocaleDateString("tr-TR")}`
+                : ""}
+            </p>
+          )}
+
           {(icerik.iliskili_konu_basliklari ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="text-xs text-muted-foreground">İlişkili konu başlıkları:</span>
@@ -358,6 +381,14 @@ function PlanGorunumu() {
         )}
       </div>
 
+      <GipsciSerit
+        icerik={icerik}
+        kuralProfili={plan.kural_profili}
+        toplamSure={toplamSure}
+      />
+
+
+
       {plan.durum === "revizyon_istendi" && denetimQ.data?.sonTur && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
           <p className="text-sm font-semibold text-amber-700">
@@ -396,20 +427,26 @@ function PlanGorunumu() {
         <div className="rounded-xl border bg-card p-4">
           <p className="text-sm font-medium">Denetim geçmişi</p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            {(denetimQ.data?.turlar ?? []).map((t) => (
-              <li key={t.id}>
-                {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
-                {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
-                {t.karar === "onayli"
-                  ? "onaylandı"
-                  : t.karar === "revizyon_istendi"
-                    ? "revizyon istendi"
-                    : "karar bekliyor"}
-              </li>
-            ))}
+            {(() => {
+              const turlar = denetimQ.data?.turlar ?? [];
+              const surumler = turSurumleri(turlar);
+              return turlar.map((t) => (
+                <li key={t.id}>
+                  {t.tur_no}. tur · v{surumler.get(t.id) ?? 1} ·{" "}
+                  {new Date(t.created_at).toLocaleDateString("tr-TR")} · {t.kritik_sayisi} kritik /{" "}
+                  {t.uyari_sayisi} uyarı · {kararEtiketi(t.karar ?? null).toLocaleLowerCase("tr")}
+                </li>
+              ));
+            })()}
           </ul>
         </div>
       )}
+
+      <GeriBildirimListesi
+        planId={plan.id}
+        baslik="Saha geri bildirimleri (eğitmenlerden)"
+      />
+
 
 
 

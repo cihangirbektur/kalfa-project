@@ -120,6 +120,11 @@ MEDYA VE BASILI MATERYAL KURALLARI:
 - "onerilen_kaynak": konuya uygun, bildiğin bir platformun yalnızca ADI
   (örnek: "PhET simülasyonları", "Blockly Games", "TÜBİTAK Bilim Genç",
   "Scratch"). Bağlantı değil, isim.
+- medya_onerileri içinde kategori "dijital" olan EN AZ 2 kayıt üret. Bu
+  ZORUNLUDUR; basılı materyal ürettin diye dijitali atlama. Dijital kayıtların
+  tipleri BİRBİRİNDEN FARKLI olsun ve şu havuzdan seçilsin:
+  video | animasyon | simulasyon | interaktif_arac | dijital_quiz
+  Her dijital kayıtta "arama_terimi" ve "kullanilacak_asama" dolu olsun.
 - medya_onerileri içinde kategori "basili" olan EN AZ 3 kayıt üret. Basılı
   kayıtlarda şu alanlar dolu olsun: ad, tip (calisma_yapragi |
   soru_karti_destesi | poster | yonerge_karti | rubrik_formu | oyun_mati |
@@ -131,6 +136,8 @@ MEDYA VE BASILI MATERYAL KURALLARI:
   birebir barındırsın.
 - Etkinliklerde kart oyunu varsa, o oyunun kart destesi de ayrı bir basılı
   materyal olarak listelensin.
+- İki gruptan biri boş kalırsa plan EKSİK sayılır. Her iki grubu da doldur.
+
 
 SÜRE KURALLARI (her plan için geçerli):
 - Yaratma/Açıklama aşaması toplam sürenin en az %20'si olsun.

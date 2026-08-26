@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DenetimBulgusu, Kazanim, Plan } from "@/lib/tipler";
+import type { DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
+import { bildirimOzeti, bildirimleriCoz } from "@/lib/geribildirim";
 
 export const Route = createFileRoute("/raporlar")({
   head: () => ({
@@ -54,6 +55,19 @@ function Raporlar() {
     },
   });
 
+  const { data: bildirimler = [] } = useQuery({
+    queryKey: ["tum-geribildirim"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("geri_bildirimler").select("*");
+      if (error) throw error;
+      return (data ?? []) as unknown as GeriBildirim[];
+    },
+  });
+
+  const sahaOzeti = useMemo(() => bildirimOzeti(bildirimleriCoz(bildirimler)), [bildirimler]);
+
+
+
   const harita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
   const aktif = planlar.filter((p) => !p.arsivlendi);
 
@@ -93,6 +107,43 @@ function Raporlar() {
         <Sayac etiket="Onaylı" deger={String(onayli)} />
         <Sayac etiket="Ortalama kritik bulgu" deger={ortalamaKritik} />
       </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Sayac etiket="Sahada uygulama" deger={String(sahaOzeti.uygulamaSayisi)} />
+        <Sayac etiket="Toplam geri bildirim" deger={String(sahaOzeti.toplam)} />
+        <Sayac
+          etiket="En çok zorlanılan aşama"
+          deger={
+            sahaOzeti.enZorAsama
+              ? `${sahaOzeti.enZorAsama.asama} (${sahaOzeti.enZorAsama.adet})`
+              : "—"
+          }
+        />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Sahada zorlanılan aşamalar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sahaOzeti.asamaDagilimi.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Henüz aşama bazlı geri bildirim yok.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border text-sm">
+              {sahaOzeti.asamaDagilimi.map((a) => (
+                <li key={a.asama} className="flex items-center justify-between py-2">
+                  <span>{a.asama}</span>
+                  <span className="font-medium">{a.adet}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader>

@@ -25,6 +25,7 @@ import {
   GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
   KONU_BASLIGI_YOK_NOTU,
+  MODEL_BILGI,
   OGRETIM_SECENEKLERI,
   PROGRAM_DONEMLERI,
   PROGRAM_DONEMI_ETIKET,
@@ -224,6 +225,28 @@ function YeniPlan() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <div className="rounded-xl border bg-primary p-5 text-primary-foreground">
+        <p className="text-xs uppercase tracking-[0.2em] opacity-80">KALFA</p>
+        <p className="mt-1 text-xl font-semibold">Kalfa üretir, usta onaylar.</p>
+        <p className="mt-1 text-sm opacity-90">
+          Yapay zekâ atölye içeriğini üretir; pedagojik denetim ve insan onayı olmadan hiçbir
+          içerik sahaya çıkmaz.
+        </p>
+        <ul className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+          {[
+            ["İçerik Uzmanı", "Kazanımı seçer, planı ürettirir, revizyonları düzeltir."],
+            ["Pedagojik Uzman", "12 kural üzerinden denetler; onaylar veya revizyon ister."],
+            ["Eğitmen", "Onaylı planı uygular, yazdırır ve saha geri bildirimi verir."],
+            ["Eğitim Yöneticisi", "Üretim, onay ve saha göstergelerini raporlardan izler."],
+          ].map(([rol, gorev]) => (
+            <li key={rol} className="rounded-lg bg-primary-foreground/10 p-3">
+              <span className="font-medium">{rol}</span>
+              <span className="block opacity-90">{gorev}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Yeni Plan</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -231,6 +254,7 @@ function YeniPlan() {
           üretsin.
         </p>
       </div>
+
 
       <Card>
         <CardHeader>
@@ -368,24 +392,33 @@ function YeniPlan() {
               </SelectContent>
             </Select>
 
-            <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
-              {seciliOgretim.profil === "GIPSCI" ? (
-                <>
-                  <p>{GIPSCI_BILGI_NOTU}</p>
+            {(() => {
+              const bilgi =
+                MODEL_BILGI[seciliOgretim.profil === "GIPSCI" ? "GIPSCI" : seciliOgretim.sablon];
+              const asamaZinciri = (seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ");
+              return (
+                <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-foreground">
+                    {bilgi?.ad ?? seciliOgretim.etiket}
+                  </p>
+                  {bilgi?.acilim && <p className="mt-0.5 italic">{bilgi.acilim}</p>}
+                  {asamaZinciri && (
+                    <p className="mt-2">
+                      <span className="font-medium text-foreground">Aşamalar: </span>
+                      {asamaZinciri}
+                    </p>
+                  )}
+                  {seciliOgretim.profil === "GIPSCI" && <p className="mt-2">{GIPSCI_BILGI_NOTU}</p>}
                   <p className="mt-2">
-                    Kaynak: {seciliProfil?.kaynak ?? "T3 Vakfı Araştırma Raporu, Şubat 2026"}
+                    Kaynak:{" "}
+                    {seciliOgretim.profil === "GIPSCI"
+                      ? (seciliProfil?.kaynak ?? bilgi?.kaynak ?? "—")
+                      : (seciliSablon?.kaynak ?? bilgi?.kaynak ?? "—")}
                   </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium text-foreground">{seciliSablon?.ad}</p>
-                  <p className="mt-1">
-                    {(seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ")}
-                  </p>
-                  <p className="mt-2">Kaynak: {seciliSablon?.kaynak ?? "—"}</p>
-                </>
-              )}
-            </div>
+                </div>
+              );
+            })()}
+
           </div>
 
 

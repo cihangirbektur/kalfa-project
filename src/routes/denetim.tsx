@@ -17,8 +17,12 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { kararEtiketi, turSurumleri } from "@/lib/surum";
 import {
+  KURAL_KAYNAKLARI,
   KURAL_METINLERI,
+
   SEVIYE_ETIKET,
   SINIF_ROZET,
   OGRETIM_SECENEK_ETIKET,
@@ -335,21 +339,30 @@ function Denetim() {
                 {(detayQ.data?.turlar ?? []).length > 0 && (
                   <div className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
                     <p className="font-medium text-foreground">Denetim geçmişi</p>
-                    {(detayQ.data?.turlar ?? []).map((t) => (
-                      <p key={t.id}>
-                        {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
-                        {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
-                        {t.karar === "onayli"
-                          ? "onaylandı"
-                          : t.karar === "revizyon_istendi"
-                            ? "revizyon istendi"
-                            : "karar bekliyor"}
-                      </p>
-                    ))}
+                    {(() => {
+                      const turlar = detayQ.data?.turlar ?? [];
+                      const surumler = turSurumleri(turlar);
+                      return turlar.map((t) => (
+                        <p key={t.id}>
+                          {t.tur_no}. tur · v{surumler.get(t.id) ?? 1} ·{" "}
+                          {new Date(t.created_at).toLocaleDateString("tr-TR")} · {t.kritik_sayisi}{" "}
+                          kritik / {t.uyari_sayisi} uyarı ·{" "}
+                          {kararEtiketi(t.karar ?? null).toLocaleLowerCase("tr")}
+                        </p>
+                      ));
+                    })()}
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            {seciliId && (
+              <GeriBildirimListesi
+                planId={seciliId}
+                baslik="Saha geri bildirimleri (uygulayan eğitmenler)"
+              />
+            )}
+
 
             <div className="space-y-4">
               {detayQ.isLoading && (
@@ -388,7 +401,13 @@ function Denetim() {
                       <CardTitle className="text-sm font-medium">
                         {KURAL_METINLERI[b.kural_no] ?? "—"}
                       </CardTitle>
+                      {KURAL_KAYNAKLARI[b.kural_no] && (
+                        <p className="text-xs italic text-muted-foreground">
+                          {KURAL_KAYNAKLARI[b.kural_no]}
+                        </p>
+                      )}
                     </CardHeader>
+
                     <CardContent className="space-y-2 text-sm">
                       {b.mesaj && <p>{b.mesaj}</p>}
                       {b.kanit_alintisi && (
