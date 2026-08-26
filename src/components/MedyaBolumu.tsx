@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { aramaBaglantilari, basiliMi, medyaEksikligi, yazdirilabilirAc } from "@/lib/hesap";
 import { gorselBaglantisi, gorselIstemiKur, gorselUretVeYukle } from "@/lib/gorsel";
-import { BASILI_TIP_ETIKET, type Medya } from "@/lib/tipler";
+import { BASILI_TIP_ETIKET, okunabilir, type Medya } from "@/lib/tipler";
 
 type Props = {
   planId: string;
