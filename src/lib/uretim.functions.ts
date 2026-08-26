@@ -232,9 +232,12 @@ export const planUret = createServerFn({ method: "POST" })
         ? `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`
         : `ALANIN KONU BAŞLIKLARI: tanımlı değil — üretimi tema tanımı üzerinden yap, etkinlikler tema düzeyinde kalsın.`,
       `ALANIN SÜRESİ: ${data.sure_hafta} hafta`,
-      `KAZANIM KODU: ${data.kazanim_kodu}`,
-      `KAZANIM METNİ: ${data.kazanim_metni}`,
-      `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
+      data.kazanim_turet
+        ? `SEÇİLEN KONU BAŞLIĞI: ${data.konu_basligi ?? ""}\nKAZANIM: verilmedi — konu başlığından türet.`
+        : `KAZANIM KODU: ${data.kazanim_kodu}`,
+      data.kazanim_turet ? `` : `KAZANIM METNİ: ${data.kazanim_metni}`,
+      data.kazanim_turet ? `` : `BLOOM SEVİYESİ: ${data.bloom_seviyesi}`,
+
       `SEVİYE: ${data.seviye}`,
       `YAŞ ARALIĞI: ${data.yas_araligi ?? "belirtilmedi"}`,
       `ÖĞRETİM MODELİ: ${data.model_adi}`,
