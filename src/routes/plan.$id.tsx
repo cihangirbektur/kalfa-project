@@ -273,10 +273,8 @@ function PlanGorunumu() {
   const toplamSure = icerik.toplam_sure_dk ?? plan.toplam_sure;
   const asamaToplam = asamalar.reduce((t, a) => t + sayi(a.sure_dk), 0);
   const sureUyumsuz = asamalar.length > 0 && asamaToplam !== toplamSure;
-  const toplamMaliyet = malzemeler.reduce(
-    (t, m) => t + sayi(m.adet) * sayi(m.tahmini_birim_maliyet_tl),
-    0,
-  );
+  const maliyet = maliyetHesapla(malzemeler);
+
   const toplamHazirlik = malzemeler.reduce((t, m) => t + sayi(m.hazirlik_suresi_dk), 0);
 
   return (
