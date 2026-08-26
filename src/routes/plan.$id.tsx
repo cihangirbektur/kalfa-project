@@ -39,6 +39,9 @@ import {
 
 import type {
   Asama,
+  DenetimBulgusu,
+  DenetimTuru,
+
   Etkinlik,
   Kazanim,
   KavramYanilgisi,
