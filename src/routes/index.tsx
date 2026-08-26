@@ -225,6 +225,28 @@ function YeniPlan() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <div className="rounded-xl border bg-primary p-5 text-primary-foreground">
+        <p className="text-xs uppercase tracking-[0.2em] opacity-80">KALFA</p>
+        <p className="mt-1 text-xl font-semibold">Kalfa üretir, usta onaylar.</p>
+        <p className="mt-1 text-sm opacity-90">
+          Yapay zekâ atölye içeriğini üretir; pedagojik denetim ve insan onayı olmadan hiçbir
+          içerik sahaya çıkmaz.
+        </p>
+        <ul className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+          {[
+            ["İçerik Uzmanı", "Kazanımı seçer, planı ürettirir, revizyonları düzeltir."],
+            ["Pedagojik Uzman", "12 kural üzerinden denetler; onaylar veya revizyon ister."],
+            ["Eğitmen", "Onaylı planı uygular, yazdırır ve saha geri bildirimi verir."],
+            ["Eğitim Yöneticisi", "Üretim, onay ve saha göstergelerini raporlardan izler."],
+          ].map(([rol, gorev]) => (
+            <li key={rol} className="rounded-lg bg-primary-foreground/10 p-3">
+              <span className="font-medium">{rol}</span>
+              <span className="block opacity-90">{gorev}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Yeni Plan</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -232,6 +254,7 @@ function YeniPlan() {
           üretsin.
         </p>
       </div>
+
 
       <Card>
         <CardHeader>
