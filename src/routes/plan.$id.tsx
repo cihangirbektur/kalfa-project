@@ -189,10 +189,24 @@ function PlanGorunumu() {
       if (!bulgular || bulgular.length === 0)
         throw new Error("Denetçi bulgu üretmedi; sonuç kaydedilmedi.");
 
-      await supabase.from("denetim_bulgulari").delete().eq("plan_id", plan.id);
+      const yeniTurNo = ((denetimQ.data?.sonTur?.tur_no ?? 0) as number) + 1;
+      const kalanlar = bulgular.filter((b) => !b.gecti);
+      const { data: tur, error: turHata } = await supabase
+        .from("denetim_turlari")
+        .insert({
+          plan_id: plan.id,
+          tur_no: yeniTurNo,
+          kritik_sayisi: kalanlar.filter((b) => b.seviye === "kritik").length,
+          uyari_sayisi: kalanlar.filter((b) => b.seviye === "uyari").length,
+          bilgi_sayisi: kalanlar.filter((b) => b.seviye === "bilgi").length,
+        })
+        .select("id")
+        .single();
+      if (turHata) throw new Error(turHata.message);
+
       const { error: yazHata } = await supabase
         .from("denetim_bulgulari")
-        .insert(bulgular as never);
+        .insert(bulgular.map((b) => ({ ...b, tur_id: tur.id })) as never);
       if (yazHata) throw new Error(yazHata.message);
 
       const { error: durumHata } = await supabase
@@ -201,8 +215,10 @@ function PlanGorunumu() {
         .eq("id", plan.id);
       if (durumHata) throw new Error(durumHata.message);
 
-      toast.success("Denetim tamamlandı.");
+      denetimQ.refetch();
+      toast.success(`Denetim tamamlandı (${yeniTurNo}. tur).`);
       navigate({ to: "/denetim", search: { plan: plan.id } });
+
     } catch (e) {
       const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
       setDenetimHatasi(mesaj);
