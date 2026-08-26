@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { useRol } from "@/lib/rol";
 import {
   SINIF_ROZET,
@@ -707,10 +709,10 @@ function PlanGorunumu() {
             seviye={SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}
             atolyeAlani={kazanim?.atolye_alani ?? ""}
             planBasligi={icerik.plan_basligi ?? "Atölye planı"}
-            onAciklamaDegis={(i, deger) => medyaGuncelle(i, "aciklama", deger)}
-            onGorsel={async (i, yol) => {
+            onAciklamaDegis={(i: number, deger: string) => medyaGuncelle(i, "aciklama", deger)}
+            onGorsel={async (i: number, yol: string) => {
               const yeni = [...(icerik.medya_onerileri ?? [])];
-              yeni[i] = { ...yeni[i], gorsel_yolu: yol };
+              yeni[i] = { ...(yeni[i] as Medya), gorsel_yolu: yol };
               const guncel = { ...icerik, medya_onerileri: yeni };
               setIcerik(guncel);
               await supabase
