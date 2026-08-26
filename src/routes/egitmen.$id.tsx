@@ -157,17 +157,16 @@ function EgitmenPlan() {
     : "kayıtlı değil";
 
   const gonder = async () => {
-    const metin = [
-      uygulandi ? "Sınıfta uyguladım." : "Henüz uygulamadım.",
-      zorAsama ? `Zorlanılan aşama: ${zorAsama}` : "",
-      not.trim(),
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const metin = geriBildirimKodla({
+      rol: "Eğitmen",
+      asama: zorAsama,
+      metin: not.trim(),
+    });
     setGonderiliyor(true);
     const { error } = await supabase
       .from("geri_bildirimler")
       .insert({ plan_id: plan.id, not_metni: metin, uygulandi_mi: uygulandi });
+
     setGonderiliyor(false);
     if (error) {
       toast.error("Geri bildirim gönderilemedi: " + error.message);
