@@ -31,9 +31,12 @@ import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
 import { GipsciSerit } from "@/components/GipsciSerit";
 import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { DetayIskeleti } from "@/components/Iskelet";
+import { AsamaliBekleme, DENETIM_ADIMLARI } from "@/components/AsamaliBekleme";
 import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { kararEtiketi, onaylananSurum, turSurumleri } from "@/lib/surum";
 import { useRol } from "@/lib/rol";
+
 import {
   YazdirBelgesi,
   YAZDIR_KAPSAMLARI,
