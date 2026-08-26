@@ -375,15 +375,13 @@ function Denetim() {
 
 
             <div className="space-y-4">
-              {detayQ.isLoading && (
-                <p className="text-sm text-muted-foreground">Bulgular yükleniyor…</p>
-              )}
+              {detayQ.isLoading && <ListeIskeleti adet={3} />}
               {!detayQ.isLoading && bulgular.length === 0 && (
-                <Card>
-                  <CardContent className="py-6 text-sm text-muted-foreground">
-                    Bu plan için denetim bulgusu yok.
-                  </CardContent>
-                </Card>
+                <BosDurum
+                  simge="◔"
+                  baslik="Bu plan için denetim bulgusu yok"
+                  aciklama="Plan denetime gönderildiğinde 12 pedagojik kuralın sonucu burada görünür."
+                />
               )}
               {[...bulgular]
                 .sort(
@@ -393,7 +391,11 @@ function Denetim() {
                     a.kural_no - b.kural_no,
                 )
                 .map((b) => (
-                  <Card key={b.id} className={b.gecti ? "opacity-70" : undefined}>
+                  <Card
+                    key={b.id}
+                    className={`kart-etkilesim ${b.gecti ? "opacity-70" : ""}`}
+                  >
+
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span
