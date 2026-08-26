@@ -143,8 +143,13 @@ function Denetim() {
   });
 
   if (bekleyenQ.isLoading) {
-    return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <ListeIskeleti adet={3} />
+      </div>
+    );
   }
+
 
   const plan = detayQ.data?.plan;
   const sonTur = detayQ.data?.sonTur ?? null;
