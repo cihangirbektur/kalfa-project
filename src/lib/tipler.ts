@@ -296,7 +296,18 @@ export const DURUM_ETIKET: Record<string, string> = {
   denetimde: "Denetimde",
   revizyon_istendi: "Revizyon İstendi",
   onayli: "Onaylı",
+  arsivlendi: "Arşivlendi",
 };
+
+/** Durum rozetleri kendi renk ailesinde; marka turuncusu kullanılmaz. */
+export const DURUM_ROZET_STIL: Record<string, string> = {
+  taslak: "bg-slate-100 text-slate-700",
+  denetimde: "bg-sky-100 text-sky-800",
+  revizyon_istendi: "bg-amber-100 text-amber-800",
+  onayli: "bg-emerald-100 text-emerald-800",
+  arsivlendi: "bg-slate-100/70 text-slate-500 italic",
+};
+
 
 export type DenetimBulgusu = {
   id: string;
