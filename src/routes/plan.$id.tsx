@@ -164,8 +164,9 @@ function PlanGorunumu() {
 
 
   if (isLoading || !data) {
-    return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+    return <DetayIskeleti />;
   }
+
 
   const { plan, kazanim, model } = data;
   const duzenlenebilir = rol === "İçerik Uzmanı";
