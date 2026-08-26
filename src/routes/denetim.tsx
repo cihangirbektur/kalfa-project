@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { BosDurum, ListeIskeleti } from "@/components/Iskelet";
+
 import { kararEtiketi, turSurumleri } from "@/lib/surum";
 import {
   KURAL_KAYNAKLARI,
@@ -143,8 +145,13 @@ function Denetim() {
   });
 
   if (bekleyenQ.isLoading) {
-    return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <ListeIskeleti adet={3} />
+      </div>
+    );
   }
+
 
   const plan = detayQ.data?.plan;
   const sonTur = detayQ.data?.sonTur ?? null;
@@ -231,13 +238,16 @@ function Denetim() {
       </Tabs>
 
       {liste.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            {sekme === "bekleyen"
-              ? "Denetim bekleyen plan yok. İçerik uzmanı bir planı denetime gönderdiğinde bulgular burada listelenir."
-              : "Henüz onayladığınız plan yok."}
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="✓"
+          baslik={sekme === "bekleyen" ? "Denetim bekleyen plan yok" : "Henüz onayladığınız plan yok"}
+          aciklama={
+            sekme === "bekleyen"
+              ? "İçerik uzmanı bir planı denetime gönderdiğinde bulgular burada listelenir."
+              : "Onayladığınız planlar bu sekmede geçmiş olarak birikir."
+          }
+        />
+
       ) : (
         <>
           {bulgular.length > 0 && (
@@ -365,15 +375,13 @@ function Denetim() {
 
 
             <div className="space-y-4">
-              {detayQ.isLoading && (
-                <p className="text-sm text-muted-foreground">Bulgular yükleniyor…</p>
-              )}
+              {detayQ.isLoading && <ListeIskeleti adet={3} />}
               {!detayQ.isLoading && bulgular.length === 0 && (
-                <Card>
-                  <CardContent className="py-6 text-sm text-muted-foreground">
-                    Bu plan için denetim bulgusu yok.
-                  </CardContent>
-                </Card>
+                <BosDurum
+                  simge="◔"
+                  baslik="Bu plan için denetim bulgusu yok"
+                  aciklama="Plan denetime gönderildiğinde 12 pedagojik kuralın sonucu burada görünür."
+                />
               )}
               {[...bulgular]
                 .sort(
@@ -383,7 +391,11 @@ function Denetim() {
                     a.kural_no - b.kural_no,
                 )
                 .map((b) => (
-                  <Card key={b.id} className={b.gecti ? "opacity-70" : undefined}>
+                  <Card
+                    key={b.id}
+                    className={`kart-etkilesim ${b.gecti ? "opacity-70" : ""}`}
+                  >
+
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <span

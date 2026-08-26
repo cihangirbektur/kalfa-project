@@ -401,6 +401,31 @@ export const SEVIYE_ETIKET: Record<string, string> = {
   bilgi: "Bilgi",
 };
 
+/**
+ * Ekranda görünen ham veritabanı değerlerini (bir_saatlik, revizyon_istendi …)
+ * okunabilir Türkçe karşılığına çevirir. Yalnızca gösterim amaçlıdır.
+ */
+const OKUNABILIR_ETIKETLER: Record<string, string> = {
+  ...ETKINLIK_TIP_ETIKET,
+  ...PROGRAM_DONEMI_ETIKET,
+  ...BILIMTR_PROGRAM_TURU_ETIKET,
+  paket_program: "Paket program",
+  ...DURUM_ETIKET,
+  ...SEVIYE_ETIKET,
+  ...KATEGORI_ETIKET,
+  ...OGRETIM_SECENEK_ETIKET,
+};
+
+export function okunabilir(deger?: string | null): string {
+  if (!deger) return "—";
+  const eslesme = OKUNABILIR_ETIKETLER[deger];
+  if (eslesme) return eslesme;
+  if (!deger.includes("_")) return deger;
+  const duz = deger.replace(/_/g, " ");
+  return duz.charAt(0).toLocaleUpperCase("tr") + duz.slice(1);
+}
+
+
 export const BASILI_TIP_ETIKET: Record<string, string> = {
   calisma_yapragi: "Çalışma Yaprağı",
   soru_karti_destesi: "Soru Kartı Destesi",

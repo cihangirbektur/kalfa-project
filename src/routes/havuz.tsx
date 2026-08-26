@@ -26,15 +26,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { BosDurum, ListeIskeleti } from "@/components/Iskelet";
 import { arsivleyebilirMi, kaliciSilebilirMi, useRol } from "@/lib/rol";
 import {
   DURUM_ETIKET,
   BILIMTR_YAS_GRUPLARI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
+  type AtolyeAlani,
   type Kazanim,
   type Plan,
 } from "@/lib/tipler";
+
 
 export const Route = createFileRoute("/havuz")({
   head: () => ({
@@ -105,11 +108,25 @@ function Havuz() {
     },
   });
 
+  const { data: atolyeAlanlari = [] } = useQuery({
+    queryKey: ["atolye_alanlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("atolye_alanlari").select("*").order("ad");
+      if (error) throw error;
+      return data as unknown as AtolyeAlani[];
+    },
+  });
+
   const kazanimHarita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
+  const alanHarita = useMemo(
+    () => new Map(atolyeAlanlari.map((a) => [a.id, a])),
+    [atolyeAlanlari],
+  );
   const alanlar = useMemo(
     () => Array.from(new Set(kazanimlar.map((k) => k.atolye_alani))),
     [kazanimlar],
   );
+
 
   const arsivde = sekme === "arsiv";
 
@@ -147,25 +164,31 @@ function Havuz() {
       .in("id", idler);
     setIslemde(false);
     if (error) {
-      toast.error("Arşivlenemedi: " + error.message);
+      toast.error("Arşivlenemedi: " + error.message + " · Lütfen tekrar deneyin.");
       return;
     }
-    toast.success(`${idler.length} plan arşivlendi.`);
+    toast.success(`${idler.length} plan arşivlendi.`, {
+      action: { label: "Geri Al", onClick: () => void geriAl(idler) },
+    });
     setSecili([]);
     yenile();
   };
 
-  const geriAl = async (id: string) => {
+  const geriAl = async (idler: string | string[]) => {
+    const liste = Array.isArray(idler) ? idler : [idler];
     const { error } = await supabase
       .from("planlar")
       .update({ arsivlendi: false, arsivlenme_tarihi: null })
-      .eq("id", id);
+      .in("id", liste);
     if (error) {
-      toast.error("Geri alınamadı: " + error.message);
+      toast.error("Geri alınamadı: " + error.message + " · Lütfen tekrar deneyin.");
       return;
     }
-    toast.success("Plan arşivden geri alındı.");
+    toast.success(
+      liste.length > 1 ? `${liste.length} plan arşivden geri alındı.` : "Plan arşivden geri alındı.",
+    );
     yenile();
+
   };
 
   const basarisizTemizle = async () => {
@@ -291,21 +314,38 @@ function Havuz() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+        <ListeIskeleti />
       ) : satirlar.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            {arsivde ? "Arşivde plan yok." : "Kayıt bulunamadı."}
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="◎"
+          baslik={arsivde ? "Arşivde plan yok" : "Kayıt bulunamadı"}
+          aciklama={
+            arsivde
+              ? "Arşivlediğiniz planlar bu sekmede saklanır ve istediğinizde geri alınabilir."
+              : "Seçili filtrelere uyan plan yok; filtreleri gevşetin ya da yeni bir plan üretin."
+          }
+          eylem={
+            !arsivde ? (
+              <Button variant="outline" onClick={() => navigate({ to: "/" })}>
+                Yeni plan üret
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-3">
           {satirlar.map((p) => {
             const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
+            const alanAdi =
+              k?.atolye_alani ??
+              (p.atolye_alani_id ? alanHarita.get(p.atolye_alani_id)?.ad : undefined);
             const yetki = arsivleyebilirMi(rol, p.durum);
             const isaretli = seciliListe.includes(p.id);
             return (
-              <Card key={p.id} className={arsivde ? "opacity-60" : undefined}>
+              <Card
+                key={p.id}
+                className={`kart-etkilesim ${arsivde ? "opacity-60" : ""}`}
+              >
                 <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
                   {yetki && (
                     <Checkbox
@@ -318,7 +358,7 @@ function Havuz() {
                   )}
                   <div className="min-w-0 flex-1">
                     <button
-                      className="text-left"
+                      className="cursor-pointer text-left"
                       onClick={() => navigate({ to: "/plan/$id", params: { id: p.id } })}
                     >
                       <CardTitle className="text-base hover:underline">
@@ -327,10 +367,15 @@ function Havuz() {
                     </button>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <DurumEtiketi durum={p.durum} />
-                      {k && <Badge variant="secondary">{k.atolye_alani}</Badge>}
-                      {k && <Badge variant="secondary">{k.kod}</Badge>}
+                      {alanAdi && <Badge variant="secondary">{alanAdi}</Badge>}
+                      {k ? (
+                        <Badge variant="secondary">{k.kod}</Badge>
+                      ) : (
+                        p.konu_basligi && <Badge variant="secondary">{p.konu_basligi}</Badge>
+                      )}
                       <Badge variant="secondary">{SINIF_ETIKET[p.yas_grubu] ?? p.yas_grubu}</Badge>
                       <Badge variant="secondary">v{p.versiyon}</Badge>
+
                       <span className="text-muted-foreground">
                         {new Date(p.created_at).toLocaleDateString("tr-TR")}
                       </span>

@@ -140,8 +140,100 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    line-height: 1.6;
+  }
+
+  /* ── Hareket dili: hızlı (150-200ms) ve sakin ─────────────── */
+  button,
+  [data-slot="button"],
+  [role="tab"],
+  a {
+    transition:
+      background-color 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out,
+      opacity 180ms ease-out,
+      transform 150ms ease-out;
+  }
+
+  button:not(:disabled),
+  [role="tab"],
+  a[href] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [data-slot="button"]:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  button:not(:disabled):active,
+  [data-slot="button"]:not(:disabled):active {
+    transform: translateY(1px) scale(0.98);
+  }
+
+  /* Tablo satırları hoverda çok hafif renklensin */
+  tbody tr {
+    transition: background-color 150ms ease-out;
+  }
+
+  /* Sekme içeriği zıplamadan yumuşak gelsin */
+  [data-slot="tabs-content"][data-state="active"] {
+    animation: kalfa-fade 150ms ease-out;
+  }
+
+  /* Uzun metin alanları içeriğe göre büyüsün */
+  textarea {
+    field-sizing: content;
+  }
+
+  /* Durum rozeti renk geçişi */
+  .durum-rozeti {
+    transition:
+      background-color 180ms ease-out,
+      color 180ms ease-out;
   }
 }
+
+@keyframes kalfa-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tıklanabilir kartlar: hafif yükselme, layout kaymaz */
+.kart-etkilesim {
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
+  will-change: transform;
+}
+
+.kart-etkilesim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px -12px rgb(0 0 0 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .kart-etkilesim:hover {
+    transform: none;
+  }
+}
+
 
 /* ── Yazdırılabilir atölye belgesi ───────────────────────────────
    Ekran görünümü değişmez; belge yalnızca @media print altında görünür. */

@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { aramaBaglantilari, basiliMi, medyaEksikligi, yazdirilabilirAc } from "@/lib/hesap";
 import { gorselBaglantisi, gorselIstemiKur, gorselUretVeYukle } from "@/lib/gorsel";
-import { BASILI_TIP_ETIKET, type Medya } from "@/lib/tipler";
+import { BASILI_TIP_ETIKET, okunabilir, type Medya } from "@/lib/tipler";
 
 type Props = {
   planId: string;
@@ -144,8 +145,8 @@ function MedyaKarti({ medya, indeks, ...props }: Props & { medya: Medya; indeks:
   return (
     <div className="rounded-xl border p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="font-medium">{medya.ad || medya.tip}</p>
-        <Badge variant="secondary">{medya.tip}</Badge>
+        <p className="font-medium">{medya.ad || okunabilir(medya.tip)}</p>
+        <Badge variant="secondary">{okunabilir(medya.tip)}</Badge>
         {medya.kullanilacak_asama && (
           <Badge variant="secondary">{medya.kullanilacak_asama}</Badge>
         )}
@@ -248,8 +249,18 @@ function GorselAlani({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={uret} disabled={uretiliyor}>
-          {uretiliyor ? "Görsel üretiliyor…" : medya.gorsel_yolu ? "Yeniden Üret" : "Görsel Üret"}
+          {uretiliyor ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Görsel üretiliyor…
+            </span>
+          ) : medya.gorsel_yolu ? (
+            "Yeniden Üret"
+          ) : (
+            "Görsel Üret"
+          )}
         </Button>
+
         {url && (
           <Button asChild size="sm" variant="ghost">
             <a href={url} download={`${medya.ad || "gorsel"}.png`} target="_blank" rel="noreferrer">

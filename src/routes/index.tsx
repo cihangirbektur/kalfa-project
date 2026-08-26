@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Loader2 } from "lucide-react";
+import { AsamaliBekleme, URETIM_ADIMLARI } from "@/components/AsamaliBekleme";
+
 import { toast } from "sonner";
 import { planUret } from "@/lib/uretim.functions";
 import {
@@ -623,17 +625,12 @@ function YeniPlan() {
               )}
             </Button>
 
-            {uretiliyor && (
-              <div className="rounded-xl border border-accent/40 bg-accent/5 p-4 text-sm">
-                <p className="flex items-center gap-2 font-medium">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Atölye planı üretiliyor…
-                </p>
-                <p className="mt-1 text-muted-foreground">
-                  Bu işlem 20-60 saniye sürebilir. Lütfen sayfayı kapatmayın.
-                </p>
-              </div>
-            )}
+            <AsamaliBekleme
+              adimlar={URETIM_ADIMLARI}
+              aktif={uretiliyor}
+              not="Bu işlem 20-60 saniye sürebilir. Lütfen sayfayı kapatmayın."
+            />
+
 
             {hata && !uretiliyor && (
               <div className="flex flex-wrap items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm">

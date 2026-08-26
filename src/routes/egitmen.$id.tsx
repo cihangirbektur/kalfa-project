@@ -31,7 +31,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { DetayIskeleti } from "@/components/Iskelet";
+
 import { adetGosterim, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { bildirimOzeti, bildirimleriCoz, geriBildirimKodla, tarihBicimi } from "@/lib/geribildirim";
 import { GipsciSerit } from "@/components/GipsciSerit";
@@ -134,7 +138,7 @@ function EgitmenPlan() {
     },
   });
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+  if (isLoading) return <DetayIskeleti />;
 
   if (!data) {
     return (
@@ -592,8 +596,16 @@ function EgitmenPlan() {
               />
             </div>
             <Button onClick={gonder} disabled={gonderiliyor}>
-              {gonderiliyor ? "Gönderiliyor…" : "Geri bildirimi gönder"}
+              {gonderiliyor ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Gönderiliyor…
+                </span>
+              ) : (
+                "Geri bildirimi gönder"
+              )}
             </Button>
+
 
             <div className="space-y-2 border-t pt-4">
               <p className="text-sm font-medium">Bu planı uygulayan diğer eğitmenler</p>

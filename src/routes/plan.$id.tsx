@@ -27,13 +27,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
 import { GipsciSerit } from "@/components/GipsciSerit";
 import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { DetayIskeleti } from "@/components/Iskelet";
+import { AsamaliBekleme, DENETIM_ADIMLARI } from "@/components/AsamaliBekleme";
 import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { kararEtiketi, onaylananSurum, turSurumleri } from "@/lib/surum";
 import { useRol } from "@/lib/rol";
+
 import {
   YazdirBelgesi,
   YAZDIR_KAPSAMLARI,
@@ -48,7 +53,9 @@ import {
 
 import {
   SINIF_ROZET,
-  PROGRAM_DONEMI_ETIKET,
+  okunabilir,
+
+
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
   OYUN_TIPLERI,
@@ -164,8 +171,9 @@ function PlanGorunumu() {
 
 
   if (isLoading || !data) {
-    return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+    return <DetayIskeleti />;
   }
+
 
   const { plan, kazanim, model } = data;
   const duzenlenebilir = rol === "İçerik Uzmanı";
@@ -363,7 +371,7 @@ function PlanGorunumu() {
 
             {plan.program_donemi && (
               <Badge variant="secondary">
-                {PROGRAM_DONEMI_ETIKET[plan.program_donemi] ?? plan.program_donemi}
+                {okunabilir(plan.program_donemi)}
               </Badge>
             )}
             <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
@@ -423,14 +431,26 @@ function PlanGorunumu() {
                 onClick={denetimeGonder}
                 disabled={denetleniyor}
               >
-                {denetleniyor
-                  ? "Plan denetleniyor…"
-                  : plan.durum === "revizyon_istendi"
-                    ? "Düzelttim, tekrar denetime gönder"
-                    : "Denetime Gönder"}
-
+                {denetleniyor ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Plan denetleniyor…
+                  </span>
+                ) : plan.durum === "revizyon_istendi" ? (
+                  "Düzelttim, tekrar denetime gönder"
+                ) : (
+                  "Denetime Gönder"
+                )}
               </Button>
             </div>
+            <div className="w-full max-w-sm">
+              <AsamaliBekleme
+                adimlar={DENETIM_ADIMLARI}
+                aktif={denetleniyor}
+                not="Denetçi, planı üreten modelden bağımsız çalışır. Lütfen sayfayı kapatmayın."
+              />
+            </div>
+
             {denetimHatasi && (
               <div className="max-w-sm rounded-md border border-destructive/40 bg-destructive/5 p-3 text-right text-xs text-destructive">
                 <p>{denetimHatasi}</p>

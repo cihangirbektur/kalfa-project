@@ -128,7 +128,7 @@ function RootComponent() {
         <Kabuk>
           <Outlet />
         </Kabuk>
-        <Toaster />
+        <Toaster position="bottom-right" duration={3000} />
       </RolSaglayici>
     </QueryClientProvider>
   );

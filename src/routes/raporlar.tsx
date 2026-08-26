@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Iskelet } from "@/components/Iskelet";
+
 import { PROGRAM_GRUP_ETIKET, PROGRAM_SIRASI } from "@/lib/tipler";
 import type { AtolyeAlani, DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
 import { bildirimOzeti, bildirimleriCoz } from "@/lib/geribildirim";
@@ -184,9 +186,16 @@ function Raporlar() {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+            <div className="space-y-2">
+              <Iskelet className="h-4 w-2/3" />
+              <Iskelet className="h-4 w-1/2" />
+              <Iskelet className="h-4 w-3/5" />
+            </div>
           ) : programGruplari.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Henüz plan üretilmedi.</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Henüz plan üretilmedi; ilk plan üretildiğinde dağılım burada görünür.
+            </p>
+
           ) : (
             programGruplari.map((g) => (
               <div key={g.program}>
