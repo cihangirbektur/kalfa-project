@@ -699,59 +699,28 @@ function PlanGorunumu() {
         </TabsContent>
 
         <TabsContent value="medya" className="mt-4 space-y-4">
-          {(["basili", "dijital"] as const).map((kat) => {
-            const grup = medyalar
-              .map((m, i) => ({ m, i }))
-              .filter(({ m }) => (m.kategori ?? "dijital").toLowerCase().includes(kat));
-            return (
-              <Card key={kat}>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {kat === "basili" ? "Basılı materyaller" : "Dijital materyaller"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tip</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Açıklama</TableHead>
-                        <TableHead>Arama terimi</TableHead>
-                        <TableHead>Aşama</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grup.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-muted-foreground">
-                            Bu grupta öneri yok.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {grup.map(({ m, i }) => (
-                        <TableRow key={i}>
-                          <TableCell>{m.tip}</TableCell>
-                          <TableCell>{m.kategori}</TableCell>
-                          <TableCell>
-                            <Textarea
-                              rows={2}
-                              value={m.aciklama ?? ""}
-                              readOnly={!duzenlenebilir}
-                              onChange={(ev) => medyaGuncelle(i, "aciklama", ev.target.value)}
-                            />
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{m.arama_terimi}</TableCell>
-                          <TableCell>{m.kullanilacak_asama}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            );
-          })}
+          <MedyaBolumu
+            planId={plan.id}
+            medyalar={medyalar}
+            duzenlenebilir={duzenlenebilir}
+            kazanimMetni={icerik.kazanim?.metin ?? kazanim?.metin ?? ""}
+            seviye={SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}
+            atolyeAlani={kazanim?.atolye_alani ?? ""}
+            planBasligi={icerik.plan_basligi ?? "Atölye planı"}
+            onAciklamaDegis={(i, deger) => medyaGuncelle(i, "aciklama", deger)}
+            onGorsel={async (i, yol) => {
+              const yeni = [...(icerik.medya_onerileri ?? [])];
+              yeni[i] = { ...yeni[i], gorsel_yolu: yol };
+              const guncel = { ...icerik, medya_onerileri: yeni };
+              setIcerik(guncel);
+              await supabase
+                .from("planlar")
+                .update({ icerik: guncel as never })
+                .eq("id", plan.id);
+            }}
+          />
         </TabsContent>
+
 
         <TabsContent value="olcme" className="mt-4 space-y-4">
           <Card>
