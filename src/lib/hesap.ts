@@ -83,3 +83,14 @@ export function yazdirilabilirAc(baslik: string, govdeHtml: string) {
 </body></html>`);
   pencere.document.close();
 }
+
+/** Dijital ve basılı materyal alt sınırlarını denetler; eksikse uyarı metni döner. */
+export function medyaEksikligi(medyalar: Medya[]): string | null {
+  const basili = medyalar.filter((m) => basiliMi(m)).length;
+  const dijital = medyalar.length - basili;
+  const eksik: string[] = [];
+  if (dijital < 2) eksik.push(`dijital materyal (${dijital}/2)`);
+  if (basili < 3) eksik.push(`basılı materyal (${basili}/3)`);
+  if (eksik.length === 0) return null;
+  return `Bu plan eksik üretilmiş: ${eksik.join(" ve ")} alt sınırın altında. Planı yeniden üretin veya eksik materyalleri elle tamamlayın.`;
+}
