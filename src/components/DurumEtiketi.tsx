@@ -8,7 +8,7 @@ export function DurumEtiketi({ durum }: { durum: string }) {
   const stil = DURUM_ROZET_STIL[durum] ?? DURUM_ROZET_STIL["taslak"];
 
   return (
-    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${stil}`}>
+    <span className={`durum-rozeti inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${stil}`}>
       {DURUM_ETIKET[durum] ?? durum}
     </span>
   );
