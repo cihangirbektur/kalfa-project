@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,7 @@ import {
   SINIF_ROZET,
   OGRETIM_SECENEK_ETIKET,
 } from "@/lib/tipler";
-import type { DenetimBulgusu, Plan, PlanIcerik } from "@/lib/tipler";
+import type { DenetimBulgusu, DenetimTuru, Plan, PlanIcerik } from "@/lib/tipler";
 
 export const Route = createFileRoute("/denetim")({
   validateSearch: z.object({ plan: z.string().optional() }),
@@ -51,25 +52,46 @@ const SEVIYE_STIL: Record<string, string> = {
   bilgi: "bg-muted text-muted-foreground border-border",
 };
 
+const SEVIYE_SIRA: Record<string, number> = { kritik: 0, uyari: 1, bilgi: 2 };
+
 function Denetim() {
   const { plan: planId } = Route.useSearch();
   const navigate = useNavigate();
   const [not, setNot] = useState("");
+  const [sekme, setSekme] = useState<"bekleyen" | "gecmis">("bekleyen");
 
-  const planlarQ = useQuery({
-    queryKey: ["denetim-planlar"],
+  const bekleyenQ = useQuery({
+    queryKey: ["denetim-bekleyen"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("planlar")
         .select("*")
-        .in("durum", ["denetimde", "revizyon_istendi", "onayli"])
+        .eq("durum", "denetimde")
+        .eq("arsivlendi", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as Plan[];
     },
   });
 
-  const seciliId = planId ?? planlarQ.data?.[0]?.id;
+  const onayliQ = useQuery({
+    queryKey: ["denetim-onayli"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("planlar")
+        .select("*")
+        .eq("durum", "onayli")
+        .eq("arsivlendi", false)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as Plan[];
+    },
+  });
+
+  const bekleyen = bekleyenQ.data ?? [];
+  const onaylananlar = onayliQ.data ?? [];
+  const liste = sekme === "bekleyen" ? bekleyen : onaylananlar;
+  const seciliId = liste.some((p) => p.id === planId) ? planId : liste[0]?.id;
 
   const detayQ = useQuery({
     queryKey: ["denetim-detay", seciliId],
@@ -81,39 +103,47 @@ function Denetim() {
         .eq("id", seciliId!)
         .single();
       if (error) throw error;
-      const { data: bulgular, error: bHata } = await supabase
-        .from("denetim_bulgulari")
+      const { data: turlar, error: tHata } = await supabase
+        .from("denetim_turlari")
         .select("*")
         .eq("plan_id", seciliId!)
-        .order("kural_no");
-      if (bHata) throw bHata;
+        .order("tur_no", { ascending: false });
+      if (tHata) throw tHata;
+      const sonTur = ((turlar ?? []) as unknown as DenetimTuru[])[0] ?? null;
+      let bulgular: DenetimBulgusu[] = [];
+      if (sonTur) {
+        const { data: b, error: bHata } = await supabase
+          .from("denetim_bulgulari")
+          .select("*")
+          .eq("tur_id", sonTur.id)
+          .order("kural_no");
+        if (bHata) throw bHata;
+        bulgular = (b ?? []) as unknown as DenetimBulgusu[];
+      }
+      if (bulgular.length === 0) {
+        const { data: b } = await supabase
+          .from("denetim_bulgulari")
+          .select("*")
+          .eq("plan_id", seciliId!)
+          .is("tur_id", null)
+          .order("kural_no");
+        bulgular = (b ?? []) as unknown as DenetimBulgusu[];
+      }
       return {
         plan: plan as unknown as Plan,
-        bulgular: (bulgular ?? []) as unknown as DenetimBulgusu[],
+        turlar: (turlar ?? []) as unknown as DenetimTuru[],
+        sonTur,
+        bulgular,
       };
     },
   });
 
-  if (planlarQ.isLoading) {
+  if (bekleyenQ.isLoading) {
     return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
   }
 
-  const planlar = planlarQ.data ?? [];
-  if (planlar.length === 0) {
-    return (
-      <Card className="mx-auto max-w-3xl">
-        <CardHeader>
-          <CardTitle className="text-base">Denetim Paneli</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Denetim bekleyen plan yok. Bir planı Plan Görünümü'nden "Denetime Gönder" ile
-          gönderdiğinizde bulgular burada listelenir.
-        </CardContent>
-      </Card>
-    );
-  }
-
   const plan = detayQ.data?.plan;
+  const sonTur = detayQ.data?.sonTur ?? null;
   const bulgular = detayQ.data?.bulgular ?? [];
   const icerik: PlanIcerik = (plan?.icerik ?? {}) as PlanIcerik;
   const kalanlar = bulgular.filter((b) => !b.gecti);
@@ -121,6 +151,7 @@ function Denetim() {
   const kritikSayisi = kalanlar.filter((b) => b.seviye === "kritik").length;
   const uyariSayisi = kalanlar.filter((b) => b.seviye === "uyari").length;
   const bilgiSayisi = kalanlar.filter((b) => b.seviye === "bilgi").length;
+  const kararVerilebilir = sekme === "bekleyen" && Boolean(plan) && plan?.durum === "denetimde";
 
   const durumGuncelle = async (durum: string) => {
     if (!plan) return;
@@ -129,185 +160,254 @@ function Denetim() {
       toast.error("Güncellenemedi: " + error.message);
       return;
     }
-    if (not.trim()) {
+    if (sonTur) {
       await supabase
-        .from("geri_bildirimler")
-        .insert({ plan_id: plan.id, not_metni: not.trim(), uygulandi_mi: false });
-      setNot("");
+        .from("denetim_turlari")
+        .update({
+          denetci_notu: not.trim() || null,
+          karar: durum,
+          karar_tarihi: new Date().toISOString(),
+          kritik_sayisi: kritikSayisi,
+          uyari_sayisi: uyariSayisi,
+          bilgi_sayisi: bilgiSayisi,
+        })
+        .eq("id", sonTur.id);
     }
+    setNot("");
     toast.success(durum === "onayli" ? "Plan onaylandı." : "Revizyon istendi.");
     detayQ.refetch();
-    planlarQ.refetch();
+    bekleyenQ.refetch();
+    onayliQ.refetch();
   };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Denetim Paneli</h1>
           <p className="text-sm text-muted-foreground">
             Bulgular, planı üreten modelden bağımsız bir denetçi tarafından üretilir.
           </p>
+          <p className="mt-2 text-sm font-medium">Beklemede: {bekleyen.length} plan</p>
         </div>
-        <Select
-          value={seciliId ?? ""}
-          onValueChange={(v) => navigate({ to: "/denetim", search: { plan: v } })}
-        >
-          <SelectTrigger className="w-full sm:w-80">
-            <SelectValue placeholder="Plan seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            {planlar.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {((p.icerik as PlanIcerik)?.plan_basligi ?? "Adsız plan").slice(0, 60)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {liste.length > 0 && (
+          <Select
+            value={seciliId ?? ""}
+            onValueChange={(v) => navigate({ to: "/denetim", search: { plan: v } })}
+          >
+            <SelectTrigger className="w-full sm:w-80">
+              <SelectValue placeholder="Plan seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {liste.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {((p.icerik as PlanIcerik)?.plan_basligi ?? "Adsız plan").slice(0, 60)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      {bulgular.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm">
-          <span className="font-medium">
-            {kritikSayisi} kritik · {uyariSayisi} uyarı · {bilgiSayisi} bilgi
-          </span>
-          <span className="text-muted-foreground">
-            {gecenler.length}/{bulgular.length} kural geçti
-          </span>
-        </div>
-      )}
+      <Tabs
+        value={sekme}
+        onValueChange={(v) => {
+          setSekme(v === "gecmis" ? "gecmis" : "bekleyen");
+          navigate({ to: "/denetim", search: {} });
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="bekleyen">Denetim bekleyenler ({bekleyen.length})</TabsTrigger>
+          <TabsTrigger value="gecmis">Onayladıklarım ({onaylananlar.length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle className="text-base">Plan Özeti</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p className="font-medium">{icerik.plan_basligi ?? "Adsız plan"}</p>
-            {icerik.kazanim && (
-              <p className="text-muted-foreground">
-                <span className="font-medium text-foreground">{icerik.kazanim.kod}</span> —{" "}
-                {icerik.kazanim.metin}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2 text-xs">
-              {plan && (
-                <>
-                  <Badge variant="secondary">{SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
-                  <Badge variant="secondary">
-                    Model:{" "}
-                    {plan.kural_profili === "GIPSCI"
-                      ? "GiPSci"
-                      : (OGRETIM_SECENEK_ETIKET[plan.asama_sablonu ?? ""] ?? "—")}
-                  </Badge>
-                  <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
-                  <Badge variant="secondary">v{plan.versiyon}</Badge>
-                  <DurumEtiketi durum={plan.durum} />
-                </>
-              )}
-            </div>
-            <ul className="space-y-1 text-xs text-muted-foreground">
-              {(icerik.asamalar ?? []).map((a, i) => (
-                <li key={i}>
-                  {a.asama} — {a.sure_dk} dk
-                </li>
-              ))}
-            </ul>
-            {plan && (
-              <Link
-                to="/plan/$id"
-                params={{ id: plan.id }}
-                className="inline-block text-xs font-medium text-primary underline"
-              >
-                Planı aç
-              </Link>
-            )}
-
-            <div className="space-y-2 border-t pt-3">
-              <Textarea
-                placeholder="Denetçi notu (isteğe bağlı)"
-                value={not}
-                onChange={(e) => setNot(e.target.value)}
-                rows={3}
-              />
-              <div className="flex flex-col gap-2">
-                <Button
-                  onClick={() => durumGuncelle("onayli")}
-                  disabled={bulgular.length === 0 || kritikSayisi > 0}
-                >
-                  Onayla
-                </Button>
-                {kritikSayisi > 0 && (
-                  <p className="text-xs text-destructive">
-                    Kritik bulgular giderilmeden onaylanamaz
-                  </p>
-                )}
-                <Button variant="outline" onClick={() => durumGuncelle("revizyon_istendi")}>
-                  Revizyon İste
-                </Button>
-              </div>
-            </div>
+      {liste.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-sm text-muted-foreground">
+            {sekme === "bekleyen"
+              ? "Denetim bekleyen plan yok. İçerik uzmanı bir planı denetime gönderdiğinde bulgular burada listelenir."
+              : "Henüz onayladığınız plan yok."}
           </CardContent>
         </Card>
-
-        <div className="space-y-4">
-          {detayQ.isLoading && <p className="text-sm text-muted-foreground">Bulgular yükleniyor…</p>}
-          {!detayQ.isLoading && bulgular.length === 0 && (
-            <Card>
-              <CardContent className="py-6 text-sm text-muted-foreground">
-                Bu plan için henüz denetim bulgusu yok. Plan Görünümü'nden "Denetime Gönder"
-                düğmesini kullanın.
-              </CardContent>
-            </Card>
+      ) : (
+        <>
+          {bulgular.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-4 py-3 text-sm">
+              <span className="font-medium">
+                {kritikSayisi} kritik · {uyariSayisi} uyarı · {bilgiSayisi} bilgi
+              </span>
+              <span className="text-muted-foreground">
+                {gecenler.length}/{bulgular.length} kural geçti
+              </span>
+              {sonTur && (
+                <span className="text-muted-foreground">{sonTur.tur_no}. denetim turu</span>
+              )}
+            </div>
           )}
 
-          {kalanlar.map((b) => (
-            <Card key={b.id} className={`border ${SEVIYE_STIL[b.seviye] ?? ""}`}>
-              <CardContent className="space-y-2 py-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold">Kural {b.kural_no}</span>
-                  <Badge className={`border ${SEVIYE_STIL[b.seviye] ?? ""}`} variant="outline">
-                    {SEVIYE_ETIKET[b.seviye] ?? b.seviye}
-                  </Badge>
-                  {b.ilgili_asama && (
-                    <span className="text-xs text-muted-foreground">{b.ilgili_asama}</span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">{KURAL_METINLERI[b.kural_no]}</p>
-                <p className="text-sm">{b.mesaj}</p>
-                {b.kanit_alintisi && (
-                  <p className="text-sm italic text-muted-foreground">“{b.kanit_alintisi}”</p>
-                )}
-                {b.oneri && (
-                  <p className="text-sm">
-                    <span className="font-medium">Öneri: </span>
-                    {b.oneri}
+          <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+            <Card className="h-fit">
+              <CardHeader>
+                <CardTitle className="text-base">Plan Özeti</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p className="font-medium">{icerik.plan_basligi ?? "Adsız plan"}</p>
+                {icerik.kazanim && (
+                  <p className="text-muted-foreground">
+                    <span className="font-medium text-foreground">{icerik.kazanim.kod}</span> —{" "}
+                    {icerik.kazanim.metin}
                   </p>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {plan && (
+                    <>
+                      <Badge variant="secondary">
+                        {SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}
+                      </Badge>
+                      <Badge variant="secondary">
+                        Model:{" "}
+                        {plan.kural_profili === "GIPSCI"
+                          ? "GiPSci"
+                          : (OGRETIM_SECENEK_ETIKET[plan.asama_sablonu ?? ""] ?? "—")}
+                      </Badge>
+                      <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
+                      <Badge variant="secondary">v{plan.versiyon}</Badge>
+                      <DurumEtiketi durum={plan.durum} />
+                    </>
+                  )}
+                </div>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {(icerik.asamalar ?? []).map((a, i) => (
+                    <li key={i}>
+                      {a.asama} — {a.sure_dk} dk
+                    </li>
+                  ))}
+                </ul>
+                {plan && (
+                  <Link
+                    to="/plan/$id"
+                    params={{ id: plan.id }}
+                    className="inline-block text-xs font-medium text-primary underline"
+                  >
+                    Planı aç
+                  </Link>
+                )}
 
-          {gecenler.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Geçen Kurallar</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {gecenler.map((b) => (
-                  <div key={b.id} className="flex gap-2">
-                    <span className="text-primary">✓</span>
-                    <span>
-                      <span className="font-medium">Kural {b.kural_no}</span> —{" "}
-                      {b.mesaj || KURAL_METINLERI[b.kural_no]}
-                    </span>
+                {kararVerilebilir ? (
+                  <div className="space-y-2 border-t pt-3">
+                    <Textarea
+                      placeholder="Denetçi notu (içerik uzmanı bu notu görecek)"
+                      value={not}
+                      onChange={(e) => setNot(e.target.value)}
+                      rows={3}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => durumGuncelle("onayli")}
+                        disabled={bulgular.length === 0 || kritikSayisi > 0}
+                      >
+                        Onayla
+                      </Button>
+                      {kritikSayisi > 0 && (
+                        <p className="text-xs text-destructive">
+                          Kritik bulgular giderilmeden onaylanamaz
+                        </p>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => durumGuncelle("revizyon_istendi")}
+                      >
+                        Revizyon İste
+                      </Button>
+                    </div>
                   </div>
-                ))}
+                ) : (
+                  <p className="border-t pt-3 text-xs text-muted-foreground">
+                    Bu plan onaylandı; geçmiş kaydı olarak görüntülüyorsunuz.
+                  </p>
+                )}
+
+                {(detayQ.data?.turlar ?? []).length > 0 && (
+                  <div className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground">Denetim geçmişi</p>
+                    {(detayQ.data?.turlar ?? []).map((t) => (
+                      <p key={t.id}>
+                        {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
+                        {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
+                        {t.karar === "onayli"
+                          ? "onaylandı"
+                          : t.karar === "revizyon_istendi"
+                            ? "revizyon istendi"
+                            : "karar bekliyor"}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-        </div>
-      </div>
+
+            <div className="space-y-4">
+              {detayQ.isLoading && (
+                <p className="text-sm text-muted-foreground">Bulgular yükleniyor…</p>
+              )}
+              {!detayQ.isLoading && bulgular.length === 0 && (
+                <Card>
+                  <CardContent className="py-6 text-sm text-muted-foreground">
+                    Bu plan için denetim bulgusu yok.
+                  </CardContent>
+                </Card>
+              )}
+              {[...bulgular]
+                .sort(
+                  (a, b) =>
+                    Number(a.gecti) - Number(b.gecti) ||
+                    (SEVIYE_SIRA[a.seviye] ?? 9) - (SEVIYE_SIRA[b.seviye] ?? 9) ||
+                    a.kural_no - b.kural_no,
+                )
+                .map((b) => (
+                  <Card key={b.id} className={b.gecti ? "opacity-70" : undefined}>
+                    <CardHeader className="pb-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-xs font-medium ${SEVIYE_STIL[b.seviye] ?? ""}`}
+                        >
+                          {SEVIYE_ETIKET[b.seviye] ?? b.seviye}
+                        </span>
+                        <span className="text-xs text-muted-foreground">Kural {b.kural_no}</span>
+                        <span
+                          className={`text-xs font-medium ${b.gecti ? "text-primary" : "text-destructive"}`}
+                        >
+                          {b.gecti ? "geçti" : "geçmedi"}
+                        </span>
+                      </div>
+                      <CardTitle className="text-sm font-medium">
+                        {KURAL_METINLERI[b.kural_no] ?? "—"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      {b.mesaj && <p>{b.mesaj}</p>}
+                      {b.kanit_alintisi && (
+                        <p className="rounded-md bg-muted p-2 text-xs italic text-muted-foreground">
+                          “{b.kanit_alintisi}”
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                        {b.ilgili_asama && <span>Aşama: {b.ilgili_asama}</span>}
+                      </div>
+                      {b.oneri && !b.gecti && (
+                        <p className="text-xs">
+                          <span className="font-medium">Öneri: </span>
+                          {b.oneri}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -92,6 +92,7 @@ export type Database = {
           oneri: string | null
           plan_id: string | null
           seviye: string
+          tur_id: string | null
         }
         Insert: {
           created_at?: string
@@ -104,6 +105,7 @@ export type Database = {
           oneri?: string | null
           plan_id?: string | null
           seviye: string
+          tur_id?: string | null
         }
         Update: {
           created_at?: string
@@ -116,10 +118,68 @@ export type Database = {
           oneri?: string | null
           plan_id?: string | null
           seviye?: string
+          tur_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "denetim_bulgulari_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planlar"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "denetim_bulgulari_tur_id_fkey"
+            columns: ["tur_id"]
+            isOneToOne: false
+            referencedRelation: "denetim_turlari"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      denetim_turlari: {
+        Row: {
+          bilgi_sayisi: number
+          created_at: string
+          denetci_notu: string | null
+          id: string
+          karar: string | null
+          karar_tarihi: string | null
+          kritik_sayisi: number
+          plan_id: string | null
+          tur_no: number
+          updated_at: string
+          uyari_sayisi: number
+        }
+        Insert: {
+          bilgi_sayisi?: number
+          created_at?: string
+          denetci_notu?: string | null
+          id?: string
+          karar?: string | null
+          karar_tarihi?: string | null
+          kritik_sayisi?: number
+          plan_id?: string | null
+          tur_no?: number
+          updated_at?: string
+          uyari_sayisi?: number
+        }
+        Update: {
+          bilgi_sayisi?: number
+          created_at?: string
+          denetci_notu?: string | null
+          id?: string
+          karar?: string | null
+          karar_tarihi?: string | null
+          kritik_sayisi?: number
+          plan_id?: string | null
+          tur_no?: number
+          updated_at?: string
+          uyari_sayisi?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "denetim_turlari_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "planlar"
@@ -245,6 +305,8 @@ export type Database = {
       }
       planlar: {
         Row: {
+          arsivlendi: boolean
+          arsivlenme_tarihi: string | null
           asama_sablonu: string
           butce: number
           created_at: string
@@ -261,6 +323,8 @@ export type Database = {
           yas_grubu: string
         }
         Insert: {
+          arsivlendi?: boolean
+          arsivlenme_tarihi?: string | null
           asama_sablonu?: string
           butce?: number
           created_at?: string
@@ -277,6 +341,8 @@ export type Database = {
           yas_grubu: string
         }
         Update: {
+          arsivlendi?: boolean
+          arsivlenme_tarihi?: string | null
           asama_sablonu?: string
           butce?: number
           created_at?: string

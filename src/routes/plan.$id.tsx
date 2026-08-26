@@ -35,10 +35,16 @@ import {
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
   OYUN_TIPLERI,
+  SEVIYE_ETIKET,
+  KURAL_METINLERI,
+
 } from "@/lib/tipler";
 
 import type {
   Asama,
+  DenetimBulgusu,
+  DenetimTuru,
+
   Etkinlik,
   Kazanim,
   KavramYanilgisi,
@@ -109,10 +115,35 @@ function PlanGorunumu() {
     },
   });
 
+  const denetimQ = useQuery({
+    queryKey: ["plan-denetim", id],
+    queryFn: async () => {
+      const { data: turlar, error } = await supabase
+        .from("denetim_turlari")
+        .select("*")
+        .eq("plan_id", id)
+        .order("tur_no", { ascending: false });
+      if (error) throw error;
+      const liste = (turlar ?? []) as unknown as DenetimTuru[];
+      const sonTur = liste[0] ?? null;
+      let bulgular: DenetimBulgusu[] = [];
+      if (sonTur) {
+        const { data: b } = await supabase
+          .from("denetim_bulgulari")
+          .select("*")
+          .eq("tur_id", sonTur.id)
+          .order("kural_no");
+        bulgular = (b ?? []) as unknown as DenetimBulgusu[];
+      }
+      return { turlar: liste, sonTur, bulgular };
+    },
+  });
+
   const [icerik, setIcerik] = useState<PlanIcerik>({});
   useEffect(() => {
     if (data?.plan) setIcerik(data.plan.icerik ?? {});
   }, [data?.plan]);
+
 
   if (isLoading || !data) {
     return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
@@ -161,10 +192,24 @@ function PlanGorunumu() {
       if (!bulgular || bulgular.length === 0)
         throw new Error("Denetçi bulgu üretmedi; sonuç kaydedilmedi.");
 
-      await supabase.from("denetim_bulgulari").delete().eq("plan_id", plan.id);
+      const yeniTurNo = ((denetimQ.data?.sonTur?.tur_no ?? 0) as number) + 1;
+      const kalanlar = bulgular.filter((b) => !b.gecti);
+      const { data: tur, error: turHata } = await supabase
+        .from("denetim_turlari")
+        .insert({
+          plan_id: plan.id,
+          tur_no: yeniTurNo,
+          kritik_sayisi: kalanlar.filter((b) => b.seviye === "kritik").length,
+          uyari_sayisi: kalanlar.filter((b) => b.seviye === "uyari").length,
+          bilgi_sayisi: kalanlar.filter((b) => b.seviye === "bilgi").length,
+        })
+        .select("id")
+        .single();
+      if (turHata) throw new Error(turHata.message);
+
       const { error: yazHata } = await supabase
         .from("denetim_bulgulari")
-        .insert(bulgular as never);
+        .insert(bulgular.map((b) => ({ ...b, tur_id: tur.id })) as never);
       if (yazHata) throw new Error(yazHata.message);
 
       const { error: durumHata } = await supabase
@@ -173,8 +218,10 @@ function PlanGorunumu() {
         .eq("id", plan.id);
       if (durumHata) throw new Error(durumHata.message);
 
-      toast.success("Denetim tamamlandı.");
+      denetimQ.refetch();
+      toast.success(`Denetim tamamlandı (${yeniTurNo}. tur).`);
       navigate({ to: "/denetim", search: { plan: plan.id } });
+
     } catch (e) {
       const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
       setDenetimHatasi(mesaj);
@@ -284,7 +331,12 @@ function PlanGorunumu() {
                 onClick={denetimeGonder}
                 disabled={denetleniyor}
               >
-                {denetleniyor ? "Plan denetleniyor…" : "Denetime Gönder"}
+                {denetleniyor
+                  ? "Plan denetleniyor…"
+                  : plan.durum === "revizyon_istendi"
+                    ? "Düzelttim, tekrar denetime gönder"
+                    : "Denetime Gönder"}
+
               </Button>
             </div>
             {denetimHatasi && (
@@ -305,6 +357,61 @@ function PlanGorunumu() {
 
         )}
       </div>
+
+      {plan.durum === "revizyon_istendi" && denetimQ.data?.sonTur && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
+          <p className="text-sm font-semibold text-amber-700">
+            Revizyon istendi · {denetimQ.data.sonTur.tur_no}. denetim turu
+          </p>
+          {denetimQ.data.sonTur.denetci_notu && (
+            <p className="mt-2 text-sm">
+              <span className="font-medium">Denetçi notu: </span>
+              {denetimQ.data.sonTur.denetci_notu}
+            </p>
+          )}
+          {(denetimQ.data.bulgular ?? []).filter((b) => !b.gecti).length > 0 && (
+            <ul className="mt-3 space-y-2 text-sm">
+              {(denetimQ.data.bulgular ?? [])
+                .filter((b) => !b.gecti)
+                .map((b) => (
+                  <li key={b.id} className="rounded-md bg-background/60 p-2">
+                    <p className="text-xs font-medium uppercase text-muted-foreground">
+                      {SEVIYE_ETIKET[b.seviye] ?? b.seviye} · Kural {b.kural_no}
+                    </p>
+                    <p>{KURAL_METINLERI[b.kural_no] ?? b.mesaj}</p>
+                    {b.oneri && (
+                      <p className="text-xs text-muted-foreground">Öneri: {b.oneri}</p>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            Düzeltmelerini yaptıktan sonra “Düzelttim, tekrar denetime gönder” butonunu kullan.
+          </p>
+        </div>
+      )}
+
+      {(denetimQ.data?.turlar ?? []).length > 0 && (
+        <div className="rounded-xl border bg-card p-4">
+          <p className="text-sm font-medium">Denetim geçmişi</p>
+          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+            {(denetimQ.data?.turlar ?? []).map((t) => (
+              <li key={t.id}>
+                {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
+                {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
+                {t.karar === "onayli"
+                  ? "onaylandı"
+                  : t.karar === "revizyon_istendi"
+                    ? "revizyon istendi"
+                    : "karar bekliyor"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+
 
       <Tabs defaultValue="asamalar">
         <TabsList>

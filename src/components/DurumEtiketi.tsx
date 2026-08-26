@@ -7,7 +7,7 @@ export function DurumEtiketi({ durum }: { durum: string }) {
       : durum === "denetimde"
         ? "bg-accent/15 text-accent"
         : durum === "revizyon_istendi"
-          ? "bg-destructive/10 text-destructive"
+          ? "bg-amber-500/15 text-amber-700"
           : "bg-muted text-muted-foreground";
 
   return (

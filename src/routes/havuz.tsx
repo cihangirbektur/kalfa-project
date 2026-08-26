@@ -1,16 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -18,8 +14,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
-import { DURUMLAR, SINIF_DUZEYLERI, SINIF_ETIKET, type Kazanim, type Plan } from "@/lib/tipler";
+import { arsivleyebilirMi, kaliciSilebilirMi, useRol } from "@/lib/rol";
+import {
+  DURUM_ETIKET,
+  SINIF_DUZEYLERI,
+  SINIF_ETIKET,
+  type Kazanim,
+  type Plan,
+} from "@/lib/tipler";
 
 export const Route = createFileRoute("/havuz")({
   head: () => ({
@@ -27,25 +41,47 @@ export const Route = createFileRoute("/havuz")({
       { title: "İçerik Havuzu — KALFA" },
       {
         name: "description",
-        content: "Üretilen atölye planlarını alan, yaş grubu ve duruma göre filtreleyerek inceleyin.",
+        content:
+          "Üretilen atölye planlarını alan, seviye ve duruma göre filtreleyin; arşivleyerek havuzu düzenli tutun.",
       },
       { property: "og:title", content: "İçerik Havuzu — KALFA" },
       {
         property: "og:description",
-        content: "Tüm atölye planlarının listesi, filtreleri ve durum takibi.",
+        content: "Atölye planlarının listesi, durum takibi, arşivleme ve toplu işlemler.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Havuz,
 });
 
 const TUMU = "hepsi";
+const DURUM_SIRA: Record<string, number> = {
+  revizyon_istendi: 0,
+  taslak: 1,
+  denetimde: 2,
+  onayli: 3,
+};
+
+function bosUretim(p: Plan) {
+  const i = p.icerik ?? {};
+  return Object.keys(i).length === 0 || (i.asamalar ?? []).length === 0;
+}
 
 function Havuz() {
   const navigate = useNavigate();
+  const { rol } = useRol();
+  const qc = useQueryClient();
+  const yonetici = rol === "Eğitim Yöneticisi";
+
+  const [sekme, setSekme] = useState<"aktif" | "arsiv">("aktif");
   const [alan, setAlan] = useState(TUMU);
   const [yas, setYas] = useState(TUMU);
   const [durum, setDurum] = useState(TUMU);
+  const [secili, setSecili] = useState<string[]>([]);
+  const [silOnayi, setSilOnayi] = useState(false);
+  const [islemde, setIslemde] = useState(false);
 
   const { data: kazanimlar = [] } = useQuery({
     queryKey: ["kazanimlar"],
@@ -68,108 +104,281 @@ function Havuz() {
     },
   });
 
-  const kazanimHarita = useMemo(
-    () => new Map(kazanimlar.map((k) => [k.id, k])),
-    [kazanimlar],
-  );
+  const kazanimHarita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
   const alanlar = useMemo(
     () => Array.from(new Set(kazanimlar.map((k) => k.atolye_alani))),
     [kazanimlar],
   );
 
-  const satirlar = planlar.filter((p) => {
-    const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
-    if (alan !== TUMU && k?.atolye_alani !== alan) return false;
-    if (yas !== TUMU && p.yas_grubu !== yas) return false;
-    if (durum !== TUMU && p.durum !== durum) return false;
-    return true;
-  });
+  const arsivde = sekme === "arsiv";
+
+  const satirlar = useMemo(() => {
+    const liste = planlar.filter((p) => {
+      if (Boolean(p.arsivlendi) !== arsivde) return false;
+      const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
+      if (alan !== TUMU && k?.atolye_alani !== alan) return false;
+      if (yas !== TUMU && p.yas_grubu !== yas) return false;
+      if (durum !== TUMU && p.durum !== durum) return false;
+      return true;
+    });
+    if (!yonetici && !arsivde) {
+      liste.sort((a, b) => (DURUM_SIRA[a.durum] ?? 9) - (DURUM_SIRA[b.durum] ?? 9));
+    }
+    return liste;
+  }, [planlar, arsivde, alan, yas, durum, kazanimHarita, yonetici, sekme]);
+
+  const secilebilir = satirlar.filter((p) => arsivleyebilirMi(rol, p.durum));
+  const seciliListe = secili.filter((id) => satirlar.some((p) => p.id === id));
+
+  const sekmeDegistir = (v: string) => {
+    setSekme(v === "arsiv" ? "arsiv" : "aktif");
+    setSecili([]);
+  };
+
+  const yenile = () => qc.invalidateQueries({ queryKey: ["planlar"] });
+
+  const arsivle = async (idler: string[]) => {
+    if (idler.length === 0) return;
+    setIslemde(true);
+    const { error } = await supabase
+      .from("planlar")
+      .update({ arsivlendi: true, arsivlenme_tarihi: new Date().toISOString() })
+      .in("id", idler);
+    setIslemde(false);
+    if (error) {
+      toast.error("Arşivlenemedi: " + error.message);
+      return;
+    }
+    toast.success(`${idler.length} plan arşivlendi.`);
+    setSecili([]);
+    yenile();
+  };
+
+  const geriAl = async (id: string) => {
+    const { error } = await supabase
+      .from("planlar")
+      .update({ arsivlendi: false, arsivlenme_tarihi: null })
+      .eq("id", id);
+    if (error) {
+      toast.error("Geri alınamadı: " + error.message);
+      return;
+    }
+    toast.success("Plan arşivden geri alındı.");
+    yenile();
+  };
+
+  const basarisizTemizle = async () => {
+    const hedef = planlar.filter(
+      (p) => !p.arsivlendi && bosUretim(p) && arsivleyebilirMi(rol, p.durum),
+    );
+    if (hedef.length === 0) {
+      toast.info("Arşivlenecek başarısız üretim bulunamadı.");
+      return;
+    }
+    setIslemde(true);
+    const { error } = await supabase
+      .from("planlar")
+      .update({ arsivlendi: true, arsivlenme_tarihi: new Date().toISOString() })
+      .in(
+        "id",
+        hedef.map((p) => p.id),
+      );
+    setIslemde(false);
+    if (error) {
+      toast.error("Temizlenemedi: " + error.message);
+      return;
+    }
+    toast.success(`${hedef.length} başarısız üretim arşivlendi.`);
+    yenile();
+  };
+
+  const kaliciSil = async () => {
+    setIslemde(true);
+    const { error } = await supabase.from("planlar").delete().in("id", seciliListe);
+    setIslemde(false);
+    setSilOnayi(false);
+    if (error) {
+      toast.error("Silinemedi: " + error.message);
+      return;
+    }
+    toast.success(`${seciliListe.length} plan kalıcı olarak silindi.`);
+    setSecili([]);
+    yenile();
+  };
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">İçerik Havuzu</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Üretilmiş tüm atölye planları. Satıra tıklayarak plana gidin.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {yonetici ? "Yönetici Havuzu" : "İçerik Havuzu"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {yonetici
+              ? "Tüm planlar, durum rozetleriyle birlikte. Arşivleme ve kalıcı silme yetkisi sizde."
+              : "Kendi taslaklarınız ve revizyon istenen planlar üstte listelenir."}
+          </p>
+        </div>
+        {!arsivde && arsivleyebilirMi(rol, "taslak") && (
+          <Button variant="outline" onClick={basarisizTemizle} disabled={islemde}>
+            Başarısız üretimleri temizle
+          </Button>
+        )}
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-base">Planlar</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Filtre deger={alan} degistir={setAlan} etiket="Atölye alanı" secenekler={alanlar} />
-            <Filtre
-              deger={yas}
-              degistir={setYas}
-              etiket="Sınıf düzeyi"
-              secenekler={SINIF_DUZEYLERI.map((s) => s.deger)}
-              etiketle={(v) => SINIF_ETIKET[v] ?? v}
-            />
-            <Filtre
-              deger={durum}
-              degistir={setDurum}
-              etiket="Durum"
-              secenekler={[...DURUMLAR]}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Başlık</TableHead>
-                <TableHead>Atölye alanı</TableHead>
-                <TableHead>Kazanım</TableHead>
-                <TableHead>Sınıf düzeyi</TableHead>
-                <TableHead>Durum</TableHead>
-                <TableHead>Versiyon</TableHead>
-                <TableHead>Tarih</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground">
-                    Yükleniyor…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!isLoading && satirlar.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-muted-foreground">
-                    Kayıt bulunamadı.
-                  </TableCell>
-                </TableRow>
-              )}
-              {satirlar.map((p) => {
-                const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
-                return (
-                  <TableRow
-                    key={p.id}
-                    className="cursor-pointer"
-                    onClick={() => navigate({ to: "/plan/$id", params: { id: p.id } })}
-                  >
-                    <TableCell className="font-medium">
-                      {p.icerik?.plan_basligi ?? "Adsız plan"}
-                    </TableCell>
-                    <TableCell>{k?.atolye_alani ?? "—"}</TableCell>
-                    <TableCell>{k?.kod ?? "—"}</TableCell>
-                    <TableCell>{SINIF_ETIKET[p.yas_grubu] ?? p.yas_grubu}</TableCell>
-                    <TableCell>
+      <Tabs value={sekme} onValueChange={sekmeDegistir}>
+        <TabsList>
+          <TabsTrigger value="aktif">Aktif</TabsTrigger>
+          <TabsTrigger value="arsiv">Arşiv</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="flex flex-wrap gap-2">
+        <Filtre deger={alan} degistir={setAlan} etiket="Atölye alanı" secenekler={alanlar} />
+        <Filtre
+          deger={yas}
+          degistir={setYas}
+          etiket="Seviye"
+          secenekler={SINIF_DUZEYLERI.map((s) => s.deger)}
+          etiketle={(v) => SINIF_ETIKET[v] ?? v}
+        />
+        {yonetici && (
+          <Filtre
+            deger={durum}
+            degistir={setDurum}
+            etiket="Durum"
+            secenekler={["taslak", "denetimde", "revizyon_istendi", "onayli"]}
+            etiketle={(v) => DURUM_ETIKET[v] ?? v}
+          />
+        )}
+      </div>
+
+      {seciliListe.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm">
+          <span className="font-medium">{seciliListe.length} plan seçildi</span>
+          <span className="text-muted-foreground">·</span>
+          {arsivde ? (
+            kaliciSilebilirMi(rol) && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setSilOnayi(true)}
+                disabled={islemde}
+              >
+                Kalıcı olarak sil
+              </Button>
+            )
+          ) : (
+            <Button size="sm" onClick={() => arsivle(seciliListe)} disabled={islemde}>
+              Arşivle
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => setSecili([])}>
+            Seçimi temizle
+          </Button>
+        </div>
+      )}
+
+      {secilebilir.length > 0 && (
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Checkbox
+            checked={seciliListe.length === secilebilir.length && secilebilir.length > 0}
+            onCheckedChange={(v) => setSecili(v ? secilebilir.map((p) => p.id) : [])}
+          />
+          Tümünü seç
+        </label>
+      )}
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+      ) : satirlar.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-sm text-muted-foreground">
+            {arsivde ? "Arşivde plan yok." : "Kayıt bulunamadı."}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {satirlar.map((p) => {
+            const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
+            const yetki = arsivleyebilirMi(rol, p.durum);
+            const isaretli = seciliListe.includes(p.id);
+            return (
+              <Card key={p.id} className={arsivde ? "opacity-60" : undefined}>
+                <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
+                  {yetki && (
+                    <Checkbox
+                      className="mt-1"
+                      checked={isaretli}
+                      onCheckedChange={(v) =>
+                        setSecili((o) => (v ? [...o, p.id] : o.filter((x) => x !== p.id)))
+                      }
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <button
+                      className="text-left"
+                      onClick={() => navigate({ to: "/plan/$id", params: { id: p.id } })}
+                    >
+                      <CardTitle className="text-base hover:underline">
+                        {p.icerik?.plan_basligi ?? "Adsız plan"}
+                      </CardTitle>
+                    </button>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <DurumEtiketi durum={p.durum} />
-                    </TableCell>
-                    <TableCell>v{p.versiyon}</TableCell>
-                    <TableCell>
-                      {new Date(p.created_at).toLocaleDateString("tr-TR")}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      {k && <Badge variant="secondary">{k.atolye_alani}</Badge>}
+                      {k && <Badge variant="secondary">{k.kod}</Badge>}
+                      <Badge variant="secondary">{SINIF_ETIKET[p.yas_grubu] ?? p.yas_grubu}</Badge>
+                      <Badge variant="secondary">v{p.versiyon}</Badge>
+                      <span className="text-muted-foreground">
+                        {new Date(p.created_at).toLocaleDateString("tr-TR")}
+                      </span>
+                      {bosUretim(p) && (
+                        <span className="text-destructive">içerik boş / başarısız üretim</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    {arsivde ? (
+                      yetki && (
+                        <Button size="sm" variant="outline" onClick={() => geriAl(p.id)}>
+                          Geri Al
+                        </Button>
+                      )
+                    ) : (
+                      yetki && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => arsivle([p.id])}
+                          disabled={islemde}
+                        >
+                          Arşivle
+                        </Button>
+                      )
+                    )}
+                  </div>
+                </CardHeader>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <AlertDialog open={silOnayi} onOpenChange={setSilOnayi}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Kalıcı silme</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu işlem geri alınamaz. {seciliListe.length} plan kalıcı olarak silinecek.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Vazgeç</AlertDialogCancel>
+            <AlertDialogAction onClick={kaliciSil}>Kalıcı olarak sil</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -189,7 +398,7 @@ function Filtre({
 }) {
   return (
     <Select value={deger} onValueChange={degistir}>
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-[200px]">
         <SelectValue placeholder={etiket} />
       </SelectTrigger>
       <SelectContent>

@@ -200,7 +200,30 @@ export type Plan = {
   program_donemi?: string;
   asama_sablonu?: string;
   kural_profili?: string;
+  arsivlendi?: boolean;
+  arsivlenme_tarihi?: string | null;
   icerik: PlanIcerik;
+  created_at: string;
+};
+
+export type DenetimTuru = {
+  id: string;
+  plan_id: string | null;
+  tur_no: number;
+  denetci_notu: string | null;
+  karar: string | null;
+  karar_tarihi: string | null;
+  kritik_sayisi: number;
+  uyari_sayisi: number;
+  bilgi_sayisi: number;
+  created_at: string;
+};
+
+export type GeriBildirim = {
+  id: string;
+  plan_id: string | null;
+  uygulandi_mi: boolean;
+  not_metni: string | null;
   created_at: string;
 };
 
@@ -274,6 +297,7 @@ export type DenetimBulgusu = {
   kanit_alintisi: string | null;
   ilgili_asama: string | null;
   oneri: string | null;
+  tur_id?: string | null;
   created_at: string;
 };
 
