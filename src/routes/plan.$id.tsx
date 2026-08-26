@@ -328,7 +328,12 @@ function PlanGorunumu() {
                 onClick={denetimeGonder}
                 disabled={denetleniyor}
               >
-                {denetleniyor ? "Plan denetleniyor…" : "Denetime Gönder"}
+                {denetleniyor
+                  ? "Plan denetleniyor…"
+                  : plan.durum === "revizyon_istendi"
+                    ? "Düzelttim, tekrar denetime gönder"
+                    : "Denetime Gönder"}
+
               </Button>
             </div>
             {denetimHatasi && (
