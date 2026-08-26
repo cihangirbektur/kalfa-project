@@ -52,13 +52,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Yeni Atölye Planı — KALFA" },
+      { title: "KALFA — Bilim Türkiye Atölye İçeriği" },
       {
         name: "description",
         content:
           "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli DENEYAP atölye planı üretin.",
       },
-      { property: "og:title", content: "Yeni Atölye Planı — KALFA" },
+      { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
       {
         property: "og:description",
         content: "Kalfa üretir, usta onaylar: yapay zekâ destekli atölye içeriği üretim aracı.",
