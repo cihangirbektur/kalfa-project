@@ -48,6 +48,7 @@ export type Database = {
           created_at: string
           id: string
           kategori: string
+          kaynak: string | null
           kitap_lise_url: string | null
           kitap_ortaokul_url: string | null
           konu_basliklari: Json
@@ -60,6 +61,7 @@ export type Database = {
           created_at?: string
           id?: string
           kategori?: string
+          kaynak?: string | null
           kitap_lise_url?: string | null
           kitap_ortaokul_url?: string | null
           konu_basliklari?: Json
@@ -72,6 +74,7 @@ export type Database = {
           created_at?: string
           id?: string
           kategori?: string
+          kaynak?: string | null
           kitap_lise_url?: string | null
           kitap_ortaokul_url?: string | null
           konu_basliklari?: Json
@@ -308,12 +311,14 @@ export type Database = {
           arsivlendi: boolean
           arsivlenme_tarihi: string | null
           asama_sablonu: string
+          atolye_alani_id: string | null
           butce: number
           created_at: string
           durum: string
           icerik: Json
           id: string
           kazanim_id: string | null
+          konu_basligi: string | null
           kural_profili: string
           model_id: string | null
           ogrenci_sayisi: number
@@ -327,12 +332,14 @@ export type Database = {
           arsivlendi?: boolean
           arsivlenme_tarihi?: string | null
           asama_sablonu?: string
+          atolye_alani_id?: string | null
           butce?: number
           created_at?: string
           durum?: string
           icerik?: Json
           id?: string
           kazanim_id?: string | null
+          konu_basligi?: string | null
           kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
@@ -346,12 +353,14 @@ export type Database = {
           arsivlendi?: boolean
           arsivlenme_tarihi?: string | null
           asama_sablonu?: string
+          atolye_alani_id?: string | null
           butce?: number
           created_at?: string
           durum?: string
           icerik?: Json
           id?: string
           kazanim_id?: string | null
+          konu_basligi?: string | null
           kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
