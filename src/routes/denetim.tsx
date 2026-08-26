@@ -18,6 +18,8 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { BosDurum, ListeIskeleti } from "@/components/Iskelet";
+
 import { kararEtiketi, turSurumleri } from "@/lib/surum";
 import {
   KURAL_KAYNAKLARI,
