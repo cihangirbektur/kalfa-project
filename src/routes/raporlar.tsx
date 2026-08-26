@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Iskelet } from "@/components/Iskelet";
+
 import { PROGRAM_GRUP_ETIKET, PROGRAM_SIRASI } from "@/lib/tipler";
 import type { AtolyeAlani, DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
 import { bildirimOzeti, bildirimleriCoz } from "@/lib/geribildirim";
