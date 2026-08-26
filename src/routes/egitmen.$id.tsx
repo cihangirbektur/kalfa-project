@@ -37,6 +37,15 @@ import { bildirimOzeti, bildirimleriCoz, geriBildirimKodla, tarihBicimi } from "
 import { GipsciSerit } from "@/components/GipsciSerit";
 
 import {
+  ETKINLIK_TIP_ETIKET,
+  OGRETIM_SECENEK_ETIKET,
+  SINIF_ROZET,
+  type GeriBildirim,
+  type Kazanim,
+  type Medya,
+  type Plan,
+  type PlanIcerik,
+} from "@/lib/tipler";
 import {
   YazdirBelgesi,
   YAZDIR_KAPSAMLARI,
@@ -48,15 +57,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-  ETKINLIK_TIP_ETIKET,
-  OGRETIM_SECENEK_ETIKET,
-  SINIF_ROZET,
-  type GeriBildirim,
-  type Kazanim,
-  type Medya,
-  type Plan,
-  type PlanIcerik,
-} from "@/lib/tipler";
 
 export const Route = createFileRoute("/egitmen/$id")({
   head: () => ({
@@ -95,6 +95,7 @@ function EgitmenPlan() {
   const [not, setNot] = useState("");
   const [zorAsama, setZorAsama] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [yazdirKapsami, setYazdirKapsami] = useState<YazdirKapsami>("tum");
 
   const { data, isLoading } = useQuery({
     queryKey: ["egitmen-plan", id],
@@ -169,6 +170,11 @@ function EgitmenPlan() {
   const onayTarihi = plan.onay_tarihi
     ? new Date(plan.onay_tarihi).toLocaleString("tr-TR")
     : "kayıtlı değil";
+
+  const yazdir = (kapsam: YazdirKapsami) => {
+    setYazdirKapsami(kapsam);
+    setTimeout(() => window.print(), 50);
+  };
 
   const gonder = async () => {
     const metin = geriBildirimKodla({
