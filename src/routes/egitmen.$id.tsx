@@ -31,6 +31,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 import { MedyaBolumu } from "@/components/MedyaBolumu";
 import { DetayIskeleti } from "@/components/Iskelet";
 
