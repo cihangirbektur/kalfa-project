@@ -109,6 +109,7 @@ export type PlanIcerik = {
   /** Bilim Türkiye planlarında kazanım konu başlığından türetilir. */
   kazanim_turetildi?: boolean;
   konu_basligi?: string;
+  seviye?: string;
 
   model?: string;
   toplam_sure_dk?: number;
