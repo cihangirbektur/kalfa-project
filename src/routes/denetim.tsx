@@ -388,7 +388,13 @@ function Denetim() {
                       <CardTitle className="text-sm font-medium">
                         {KURAL_METINLERI[b.kural_no] ?? "—"}
                       </CardTitle>
+                      {KURAL_KAYNAKLARI[b.kural_no] && (
+                        <p className="text-xs italic text-muted-foreground">
+                          {KURAL_KAYNAKLARI[b.kural_no]}
+                        </p>
+                      )}
                     </CardHeader>
+
                     <CardContent className="space-y-2 text-sm">
                       {b.mesaj && <p>{b.mesaj}</p>}
                       {b.kanit_alintisi && (
