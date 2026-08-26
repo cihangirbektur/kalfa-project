@@ -551,23 +551,52 @@ function EgitmenPlan() {
             </Button>
 
             <div className="space-y-2 border-t pt-4">
-              <p className="text-sm font-medium">Gönderilen geri bildirimler</p>
-              {bildirimler.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Henüz geri bildirim yok.</p>
-              ) : (
-                <ul className="divide-y text-sm">
-                  {bildirimler.map((g) => (
-                    <li key={g.id} className="py-2">
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(g.created_at).toLocaleString("tr-TR")}
-                        {g.uygulandi_mi ? " · uygulandı" : ""}
-                      </p>
-                      <p>{g.not_metni}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <p className="text-sm font-medium">Bu planı uygulayan diğer eğitmenler</p>
+              {(() => {
+                const cozulmus = bildirimleriCoz(bildirimler);
+                const ozet = bildirimOzeti(cozulmus);
+                if (cozulmus.length === 0)
+                  return (
+                    <p className="text-sm text-muted-foreground">
+                      Henüz geri bildirim yok. İlk deneyimi siz paylaşın.
+                    </p>
+                  );
+                return (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      {ozet.uygulamaSayisi} eğitmen sınıfta uyguladı · toplam {ozet.toplam} geri
+                      bildirim
+                      {ozet.enZorAsama
+                        ? ` · en çok zorlanılan aşama: ${ozet.enZorAsama.asama} (${ozet.enZorAsama.adet})`
+                        : ""}
+                    </p>
+                    {ozet.asamaDagilimi.length > 0 && (
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        {ozet.asamaDagilimi.map((a) => (
+                          <li key={a.asama} className="flex justify-between">
+                            <span>{a.asama}</span>
+                            <span className="font-medium text-foreground">{a.adet}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <ul className="divide-y text-sm">
+                      {cozulmus.map((g) => (
+                        <li key={g.id} className="py-2">
+                          <p className="text-xs text-muted-foreground">
+                            {g.rol} · {tarihBicimi(g.created_at)}
+                            {g.uygulandi_mi ? " · sınıfta uygulandı" : ""}
+                            {g.asama ? ` · zorlanılan aşama: ${g.asama}` : ""}
+                          </p>
+                          <p>{g.metin || "—"}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              })()}
             </div>
+
           </CardContent>
         </Card>
       </div>
