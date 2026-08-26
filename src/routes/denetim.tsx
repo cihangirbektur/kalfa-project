@@ -337,21 +337,30 @@ function Denetim() {
                 {(detayQ.data?.turlar ?? []).length > 0 && (
                   <div className="space-y-1 border-t pt-3 text-xs text-muted-foreground">
                     <p className="font-medium text-foreground">Denetim geçmişi</p>
-                    {(detayQ.data?.turlar ?? []).map((t) => (
-                      <p key={t.id}>
-                        {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
-                        {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
-                        {t.karar === "onayli"
-                          ? "onaylandı"
-                          : t.karar === "revizyon_istendi"
-                            ? "revizyon istendi"
-                            : "karar bekliyor"}
-                      </p>
-                    ))}
+                    {(() => {
+                      const turlar = detayQ.data?.turlar ?? [];
+                      const surumler = turSurumleri(turlar);
+                      return turlar.map((t) => (
+                        <p key={t.id}>
+                          {t.tur_no}. tur · v{surumler.get(t.id) ?? 1} ·{" "}
+                          {new Date(t.created_at).toLocaleDateString("tr-TR")} · {t.kritik_sayisi}{" "}
+                          kritik / {t.uyari_sayisi} uyarı ·{" "}
+                          {kararEtiketi(t.karar ?? null).toLocaleLowerCase("tr")}
+                        </p>
+                      ));
+                    })()}
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            {secili && (
+              <GeriBildirimListesi
+                planId={secili}
+                baslik="Saha geri bildirimleri (uygulayan eğitmenler)"
+              />
+            )}
+
 
             <div className="space-y-4">
               {detayQ.isLoading && (
