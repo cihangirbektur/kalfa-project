@@ -367,7 +367,7 @@ function PlanGorunumu() {
 
             {plan.program_donemi && (
               <Badge variant="secondary">
-                {PROGRAM_DONEMI_ETIKET[plan.program_donemi] ?? plan.program_donemi}
+                {okunabilir(plan.program_donemi)}
               </Badge>
             )}
             <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
