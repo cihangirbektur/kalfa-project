@@ -283,27 +283,55 @@ function YeniPlan() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="rounded-xl border bg-primary p-5 text-primary-foreground">
-        <p className="text-xs uppercase tracking-[0.2em] opacity-80">KALFA</p>
-        <p className="mt-1 text-xl font-semibold">Kalfa üretir, usta onaylar.</p>
-        <p className="mt-1 text-sm opacity-90">
-          Yapay zekâ atölye içeriğini üretir; pedagojik denetim ve insan onayı olmadan hiçbir
-          içerik sahaya çıkmaz.
-        </p>
-        <ul className="mt-4 grid gap-2 text-xs sm:grid-cols-2">
+      <section className="space-y-6 rounded-xl border bg-primary p-6 text-primary-foreground">
+        <header className="space-y-2">
+          <p className="text-3xl font-semibold tracking-tight">KALFA</p>
+          <p className="text-base font-medium opacity-90">Kalfa üretir, usta onaylar.</p>
+          <p className="max-w-2xl text-sm opacity-85">
+            Bilim Türkiye ve DENEYAP atölyeleri için kazanıma bağlı atölye içeriği üretir,
+            ürettiğini bağımsız bir pedagojik denetçiyle sınar, son sözü uzmana bırakır.
+          </p>
+        </header>
+
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
           {[
-            ["İçerik Uzmanı", "Kazanımı seçer, planı ürettirir, revizyonları düzeltir."],
-            ["Pedagojik Uzman", "12 kural üzerinden denetler; onaylar veya revizyon ister."],
-            ["Eğitmen", "Onaylı planı uygular, yazdırır ve saha geri bildirimi verir."],
-            ["Eğitim Yöneticisi", "Üretim, onay ve saha göstergelerini raporlardan izler."],
-          ].map(([rol, gorev]) => (
-            <li key={rol} className="rounded-lg bg-primary-foreground/10 p-3">
-              <span className="font-medium">{rol}</span>
-              <span className="block opacity-90">{gorev}</span>
+            ["ÜRETEN YAPAY ZEKÂ", "Plan, etkinlik, oyun, malzeme, ölçme üretir"],
+            ["BAĞIMSIZ DENETÇİ", "12 pedagojik kurala karşı sınar, kanıt alıntısı verir"],
+            ["UZMAN ONAYI", "Kritik bulgu varsa onay kilitlenir"],
+          ].map(([ad, aciklama], i) => (
+            <div key={ad} className="flex flex-1 items-center gap-3">
+              <div className="flex-1 rounded-lg border border-primary-foreground/30 bg-primary-foreground/10 p-4">
+                <p className="text-xs font-semibold tracking-[0.12em]">{ad}</p>
+                <p className="mt-2 text-xs opacity-85">{aciklama}</p>
+              </div>
+              {i < 2 && (
+                <span aria-hidden className="hidden text-lg opacity-70 sm:block">
+                  →
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <ul className="grid gap-2 text-xs sm:grid-cols-2">
+          {[
+            ["İçerik Uzmanı", "Kazanım seçer, içerik üretir, düzenler"],
+            ["Pedagojik Uzman", "Bulguları inceler, onaylar veya revizyon ister"],
+            ["Eğitmen", "Onaylı içeriği açar, uygular, geri bildirim bırakır"],
+            ["Eğitim Yöneticisi", "Havuzu ve süreci izler"],
+          ].map(([rolAdi, gorev]) => (
+            <li key={rolAdi} className="rounded-lg bg-primary-foreground/10 p-3">
+              <span className="font-medium">{rolAdi}</span>
+              <span className="block opacity-85">{gorev}</span>
             </li>
           ))}
         </ul>
-      </div>
+
+        <p className="border-t border-primary-foreground/20 pt-3 text-[11px] opacity-70">
+          Denetim kuralları, T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu (Şubat
+          2026) bulgularına dayanır.
+        </p>
+      </section>
 
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Yeni Plan</h1>
