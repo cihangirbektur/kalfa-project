@@ -149,20 +149,20 @@ function Egitmen() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+        <ListeIskeleti />
       ) : planlar.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Henüz onaylı içerik yok. İçerik uzmanı plan ürettiğinde ve pedagojik uzman
-            onayladığında planlar burada görünecek.
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="◎"
+          baslik="Henüz onaylı içerik yok"
+          aciklama="İçerik uzmanı plan ürettiğinde ve pedagojik uzman onayladığında planlar burada görünecek."
+        />
       ) : liste.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            Seçtiğiniz filtrelere uyan onaylı plan yok.
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="⌕"
+          baslik="Filtrelere uyan onaylı plan yok"
+          aciklama="Atölye alanı veya seviye filtresini gevşeterek tekrar deneyin."
+        />
+
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {liste.map((p) => {
