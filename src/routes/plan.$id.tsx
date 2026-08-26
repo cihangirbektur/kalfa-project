@@ -34,6 +34,17 @@ import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
 import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { kararEtiketi, onaylananSurum, turSurumleri } from "@/lib/surum";
 import { useRol } from "@/lib/rol";
+import {
+  YazdirBelgesi,
+  YAZDIR_KAPSAMLARI,
+  type YazdirKapsami,
+} from "@/components/YazdirBelgesi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import {
   SINIF_ROZET,
@@ -88,6 +99,7 @@ function PlanGorunumu() {
   const denetle = useServerFn(planDenetle);
   const [denetleniyor, setDenetleniyor] = useState(false);
   const [denetimHatasi, setDenetimHatasi] = useState<string | null>(null);
+  const [yazdirKapsami, setYazdirKapsami] = useState<YazdirKapsami>("tum");
 
 
   const { data, isLoading, refetch } = useQuery({
@@ -290,8 +302,18 @@ function PlanGorunumu() {
 
   const toplamHazirlik = malzemeler.reduce((t, m) => t + sayi(m.hazirlik_suresi_dk), 0);
 
+  if (typeof document !== "undefined") {
+    document.title = `${icerik.plan_basligi ?? "Atölye planı"} · KALFA`;
+  }
+
+  const yazdir = (kapsam: YazdirKapsami) => {
+    setYazdirKapsami(kapsam);
+    setTimeout(() => window.print(), 50);
+  };
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <>
+    <div className="kalfa-ekran mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -368,6 +390,27 @@ function PlanGorunumu() {
               ))}
             </div>
           )}
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => yazdir("tum")}>
+              Yazdır
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Yazdırma kapsamı">
+                  ▾
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {YAZDIR_KAPSAMLARI.map((k) => (
+                  <DropdownMenuItem key={k.deger} onSelect={() => yazdir(k.deger)}>
+                    {k.etiket}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         {duzenlenebilir && (
           <div className="flex flex-col items-end gap-2">
@@ -992,6 +1035,15 @@ function PlanGorunumu() {
       </Tabs>
 
     </div>
+    <YazdirBelgesi
+      plan={plan}
+      icerik={icerik}
+      kazanim={kazanim}
+      modelAdi={modelAdi}
+      alanAdi={kazanim?.atolye_alani ?? plan.konu_basligi ?? null}
+      kapsam={yazdirKapsami}
+    />
+    </>
   );
 }
 

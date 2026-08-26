@@ -46,6 +46,17 @@ import {
   type Plan,
   type PlanIcerik,
 } from "@/lib/tipler";
+import {
+  YazdirBelgesi,
+  YAZDIR_KAPSAMLARI,
+  type YazdirKapsami,
+} from "@/components/YazdirBelgesi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/egitmen/$id")({
   head: () => ({
@@ -84,6 +95,7 @@ function EgitmenPlan() {
   const [not, setNot] = useState("");
   const [zorAsama, setZorAsama] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [yazdirKapsami, setYazdirKapsami] = useState<YazdirKapsami>("tum");
 
   const { data, isLoading } = useQuery({
     queryKey: ["egitmen-plan", id],
@@ -159,6 +171,15 @@ function EgitmenPlan() {
     ? new Date(plan.onay_tarihi).toLocaleString("tr-TR")
     : "kayıtlı değil";
 
+  if (typeof document !== "undefined") {
+    document.title = `${icerik.plan_basligi ?? "Atölye planı"} · KALFA`;
+  }
+
+  const yazdir = (kapsam: YazdirKapsami) => {
+    setYazdirKapsami(kapsam);
+    setTimeout(() => window.print(), 50);
+  };
+
   const gonder = async () => {
     const metin = geriBildirimKodla({
       rol: "Eğitmen",
@@ -221,9 +242,25 @@ function EgitmenPlan() {
             </div>
             <p className="text-xs text-muted-foreground">Onay tarihi: {onayTarihi}</p>
           </div>
-          <Button variant="outline" onClick={() => window.print()}>
-            Yazdır
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => yazdir("tum")}>
+              Yazdır
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Yazdırma kapsamı">
+                  ▾
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {YAZDIR_KAPSAMLARI.map((k) => (
+                  <DropdownMenuItem key={k.deger} onSelect={() => yazdir(k.deger)}>
+                    {k.etiket}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <GipsciSerit
@@ -609,49 +646,14 @@ function EgitmenPlan() {
         </Card>
       </div>
 
-      {/* Yazdırma sayfaları */}
-      <div className="hidden print:block">
-        <section className="break-after-page">
-          <h2 className="text-xl font-semibold">Merak Soru Kartları — {icerik.plan_basligi}</h2>
-          {kartlar.length === 0 ? (
-            <p className="mt-4 text-sm">Soru kartı tanımlı değil.</p>
-          ) : (
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              {kartlar.map((s, i) => (
-                <div key={i} className="rounded-lg border p-4 text-sm">
-                  <p className="mb-2 text-xs">Kart {i + 1}</p>
-                  <p>{s}</p>
-                </div>
-              ))}
-            </div>
-          )}
-          {icerik.merak_tetikleyicileri?.merak_kutusu_notu && (
-            <p className="mt-4 text-sm">{icerik.merak_tetikleyicileri.merak_kutusu_notu}</p>
-          )}
-        </section>
-        <section>
-          <h2 className="text-xl font-semibold">Malzeme Listesi — {icerik.plan_basligi}</h2>
-          <table className="mt-4 w-full text-left text-sm">
-            <thead>
-              <tr>
-                <th className="border-b py-1">Malzeme</th>
-                <th className="border-b py-1">Adet</th>
-                <th className="border-b py-1">Güvenlik notu</th>
-              </tr>
-            </thead>
-            <tbody>
-              {malzemeler.map((m, i) => (
-                <tr key={i}>
-                  <td className="border-b py-1">{m.ad}</td>
-                  <td className="border-b py-1">{adetGosterim(m)}</td>
-                  <td className="border-b py-1">{m.guvenlik_notu}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="mt-3 text-sm">Toplam maliyet: {paraBicimi(maliyet.toplam)} TL</p>
-        </section>
-      </div>
+      <YazdirBelgesi
+        plan={plan}
+        icerik={icerik}
+        kazanim={kazanim}
+        modelAdi={model}
+        alanAdi={kazanim?.atolye_alani ?? plan.konu_basligi ?? null}
+        kapsam={yazdirKapsami}
+      />
     </>
   );
 }

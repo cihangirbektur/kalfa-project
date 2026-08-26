@@ -142,3 +142,218 @@
     color: var(--color-foreground);
   }
 }
+
+/* ── Yazdırılabilir atölye belgesi ───────────────────────────────
+   Ekran görünümü değişmez; belge yalnızca @media print altında görünür. */
+.kalfa-yazdir {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .kalfa-ekran {
+    display: none !important;
+  }
+
+  .kalfa-yazdir {
+    display: block !important;
+    font-family: "Times New Roman", Georgia, serif;
+    color: #000;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  .kalfa-yazdir p {
+    margin: 0 0 4pt;
+  }
+
+  .y-sayfa {
+    position: relative;
+    break-after: page;
+    page-break-after: always;
+    padding-bottom: 6mm;
+  }
+
+  .y-sayfa:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  .y-ust {
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4pt;
+    margin-bottom: 14pt;
+  }
+
+  .y-baslik {
+    font-size: 26pt;
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 0 0 10pt;
+  }
+
+  .y-kod {
+    font-weight: 700;
+    font-size: 11pt;
+  }
+
+  .y-kazanim {
+    font-size: 11pt;
+    margin-bottom: 10pt;
+  }
+
+  .y-kunye {
+    font-size: 9.5pt;
+    color: #333;
+  }
+
+  .y-onay {
+    margin: 10pt 0;
+    border: 1px solid #000;
+    padding: 6pt 8pt;
+    font-size: 9.5pt;
+  }
+
+  .y-h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #000;
+    padding-bottom: 3pt;
+    margin: 16pt 0 8pt;
+  }
+
+  .y-h3 {
+    font-size: 11.5pt;
+    font-weight: 700;
+    margin: 0 0 4pt;
+  }
+
+  .y-etiket {
+    font-weight: 700;
+  }
+
+  .y-blok {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border-top: 1px solid #999;
+    padding: 8pt 0;
+  }
+
+  .y-liste {
+    margin: 2pt 0 6pt 16pt;
+    padding: 0;
+  }
+
+  .y-kutu {
+    border: 1px solid #000;
+    padding: 6pt 8pt;
+    margin-top: 6pt;
+  }
+
+  .y-tablo {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 8pt;
+  }
+
+  .y-tablo th,
+  .y-tablo td {
+    border: 1px solid #999;
+    padding: 4pt 5pt;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .y-tablo thead th {
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .y-tablo tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .y-riskli td {
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+  }
+
+  .y-riskli td:first-child {
+    border-left: 2px solid #000;
+  }
+
+  .y-riskli td:last-child {
+    border-right: 2px solid #000;
+  }
+
+  .y-kutucuk-sutun {
+    width: 10mm;
+    text-align: center;
+  }
+
+  .y-kutucuk {
+    display: inline-block;
+    width: 5mm;
+    height: 5mm;
+    border: 1px solid #000;
+  }
+
+  .y-toplam {
+    font-weight: 700;
+    font-size: 10.5pt;
+    margin-top: 6pt;
+  }
+
+  .y-kartlar {
+    display: block;
+  }
+
+  .y-kart {
+    height: 118mm;
+    border: 1px dashed #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12mm;
+    font-size: 18pt;
+    line-height: 1.35;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .y-kart + .y-kart {
+    border-top: none;
+  }
+
+  .y-not {
+    font-size: 9.5pt;
+    margin-top: 6pt;
+  }
+
+  .y-altbilgi {
+    margin-top: 10pt;
+    border-top: 1px solid #999;
+    padding-top: 3pt;
+    font-size: 8pt;
+    color: #444;
+  }
+}
