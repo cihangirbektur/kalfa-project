@@ -245,6 +245,9 @@ export type OgretimModeli = {
 export type Plan = {
   id: string;
   kazanim_id: string | null;
+  atolye_alani_id?: string | null;
+  konu_basligi?: string | null;
+
   model_id: string | null;
   yas_grubu: string;
   toplam_sure: number;
