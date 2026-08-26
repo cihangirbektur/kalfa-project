@@ -248,8 +248,18 @@ function GorselAlani({
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={uret} disabled={uretiliyor}>
-          {uretiliyor ? "Görsel üretiliyor…" : medya.gorsel_yolu ? "Yeniden Üret" : "Görsel Üret"}
+          {uretiliyor ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Görsel üretiliyor…
+            </span>
+          ) : medya.gorsel_yolu ? (
+            "Yeniden Üret"
+          ) : (
+            "Görsel Üret"
+          )}
         </Button>
+
         {url && (
           <Button asChild size="sm" variant="ghost">
             <a href={url} download={`${medya.ad || "gorsel"}.png`} target="_blank" rel="noreferrer">
