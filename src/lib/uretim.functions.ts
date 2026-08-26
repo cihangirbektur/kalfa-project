@@ -109,6 +109,29 @@ EK ALAN KURALLARI:
 - degerlendirme.surec_odakli en az 2 madde içersin ve ürünü değil, öğrencinin
   düşünme sürecini gözlemlesin.
 
+MALZEME ALANI KURALI:
+- "adet" alanı YALNIZCA SAYI olsun (örnek: 20). İçine birim yazma.
+- Birim ayrı alanda olsun: "birim" (adet, set, paket, kutu, metre gibi).
+  "20 adet" biçiminde tek alan YASAK.
+
+MEDYA VE BASILI MATERYAL KURALLARI:
+- Hiçbir alana URL, bağlantı veya web adresi YAZMA. Bağlantıları uygulama
+  kendisi kurar. Yalnızca "arama_terimi" yaz.
+- "onerilen_kaynak": konuya uygun, bildiğin bir platformun yalnızca ADI
+  (örnek: "PhET simülasyonları", "Blockly Games", "TÜBİTAK Bilim Genç",
+  "Scratch"). Bağlantı değil, isim.
+- medya_onerileri içinde kategori "basili" olan EN AZ 3 kayıt üret. Basılı
+  kayıtlarda şu alanlar dolu olsun: ad, tip (calisma_yapragi |
+  soru_karti_destesi | poster | yonerge_karti | rubrik_formu | oyun_mati |
+  etiket), ne_icerir (materyalin üzerinde tam olarak ne yazacağı, tek
+  paragraf), sayfa_sayisi, baski_notu (renkli mi siyah-beyaz mı, A4 mü A3 mü,
+  laminasyon gerekli mi, kaç kopya), kullanilacak_asama.
+- Basılı materyallerden biri MUTLAKA merak soru kartı destesi olsun ve
+  ne_icerir alanı merak_tetikleyicileri.soru_kartlari içindeki soruları
+  birebir barındırsın.
+- Etkinliklerde kart oyunu varsa, o oyunun kart destesi de ayrı bir basılı
+  materyal olarak listelensin.
+
 SÜRE KURALLARI (her plan için geçerli):
 - Yaratma/Açıklama aşaması toplam sürenin en az %20'si olsun.
 - Keşfetme aşaması toplam sürenin en az %25'i olsun.
