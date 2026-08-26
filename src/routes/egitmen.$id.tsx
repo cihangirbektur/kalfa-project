@@ -33,6 +33,9 @@ import {
 import { toast } from "sonner";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
 import { adetGosterim, maliyetHesapla, paraBicimi } from "@/lib/hesap";
+import { bildirimOzeti, bildirimleriCoz, geriBildirimKodla, tarihBicimi } from "@/lib/geribildirim";
+import { GipsciSerit } from "@/components/GipsciSerit";
+
 import {
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
