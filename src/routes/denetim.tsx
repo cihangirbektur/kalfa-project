@@ -238,13 +238,16 @@ function Denetim() {
       </Tabs>
 
       {liste.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            {sekme === "bekleyen"
-              ? "Denetim bekleyen plan yok. İçerik uzmanı bir planı denetime gönderdiğinde bulgular burada listelenir."
-              : "Henüz onayladığınız plan yok."}
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="✓"
+          baslik={sekme === "bekleyen" ? "Denetim bekleyen plan yok" : "Henüz onayladığınız plan yok"}
+          aciklama={
+            sekme === "bekleyen"
+              ? "İçerik uzmanı bir planı denetime gönderdiğinde bulgular burada listelenir."
+              : "Onayladığınız planlar bu sekmede geçmiş olarak birikir."
+          }
+        />
+
       ) : (
         <>
           {bulgular.length > 0 && (
