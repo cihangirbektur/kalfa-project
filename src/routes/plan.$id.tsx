@@ -51,8 +51,8 @@ import {
 
 import {
   SINIF_ROZET,
-  PROGRAM_DONEMI_ETIKET,
   okunabilir,
+
 
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
