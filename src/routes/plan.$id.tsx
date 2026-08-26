@@ -321,7 +321,17 @@ function PlanGorunumu() {
             <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
             <Badge variant="secondary">v{plan.versiyon}</Badge>
             <DurumEtiketi durum={plan.durum} />
+            {plan.arsivlendi && <DurumEtiketi durum="arsivlendi" />}
           </div>
+          {plan.durum === "onayli" && (
+            <p className="text-xs font-medium text-emerald-700">
+              v{onaylananSurum(denetimQ.data?.turlar ?? []) ?? plan.versiyon} olarak onaylandı
+              {plan.onay_tarihi
+                ? ` · ${new Date(plan.onay_tarihi).toLocaleDateString("tr-TR")}`
+                : ""}
+            </p>
+          )}
+
           {(icerik.iliskili_konu_basliklari ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-2 pt-1">
               <span className="text-xs text-muted-foreground">İlişkili konu başlıkları:</span>
