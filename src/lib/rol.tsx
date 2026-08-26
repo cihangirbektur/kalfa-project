@@ -45,18 +45,24 @@ export function kaliciSilebilirMi(rol: Rol) {
   return rol === "Eğitim Yöneticisi";
 }
 
-type RolBaglami = { rol: Rol; setRol: (r: Rol) => void };
+type RolBaglami = { rol: Rol; setRol: (r: Rol) => void; hazir: boolean };
 
-const Baglam = createContext<RolBaglami>({ rol: "İçerik Uzmanı", setRol: () => {} });
+const Baglam = createContext<RolBaglami>({
+  rol: "İçerik Uzmanı",
+  setRol: () => {},
+  hazir: false,
+});
 
 export function RolSaglayici({ children }: { children: ReactNode }) {
   const [rol, setRol] = useState<Rol>("İçerik Uzmanı");
+  const [hazir, setHazir] = useState(false);
 
   useEffect(() => {
     const kayitli = window.localStorage.getItem("kalfa-rol");
     if (kayitli && (ROLLER as readonly string[]).includes(kayitli)) {
       setRol(kayitli as Rol);
     }
+    setHazir(true);
   }, []);
 
   const degistir = (r: Rol) => {
@@ -64,7 +70,7 @@ export function RolSaglayici({ children }: { children: ReactNode }) {
     window.localStorage.setItem("kalfa-rol", r);
   };
 
-  return <Baglam.Provider value={{ rol, setRol: degistir }}>{children}</Baglam.Provider>;
+  return <Baglam.Provider value={{ rol, setRol: degistir, hazir }}>{children}</Baglam.Provider>;
 }
 
 export function useRol() {
