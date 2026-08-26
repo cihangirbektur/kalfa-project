@@ -18,7 +18,9 @@ import {
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import {
+  KURAL_KAYNAKLARI,
   KURAL_METINLERI,
+
   SEVIYE_ETIKET,
   SINIF_ROZET,
   OGRETIM_SECENEK_ETIKET,
