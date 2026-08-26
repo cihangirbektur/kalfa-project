@@ -291,21 +291,38 @@ function Havuz() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+        <ListeIskeleti />
       ) : satirlar.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-sm text-muted-foreground">
-            {arsivde ? "Arşivde plan yok." : "Kayıt bulunamadı."}
-          </CardContent>
-        </Card>
+        <BosDurum
+          simge="◎"
+          baslik={arsivde ? "Arşivde plan yok" : "Kayıt bulunamadı"}
+          aciklama={
+            arsivde
+              ? "Arşivlediğiniz planlar bu sekmede saklanır ve istediğinizde geri alınabilir."
+              : "Seçili filtrelere uyan plan yok; filtreleri gevşetin ya da yeni bir plan üretin."
+          }
+          eylem={
+            !arsivde ? (
+              <Button variant="outline" onClick={() => navigate({ to: "/" })}>
+                Yeni plan üret
+              </Button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="space-y-3">
           {satirlar.map((p) => {
             const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
+            const alanAdi =
+              k?.atolye_alani ??
+              (p.atolye_alani_id ? alanHarita.get(p.atolye_alani_id)?.ad : undefined);
             const yetki = arsivleyebilirMi(rol, p.durum);
             const isaretli = seciliListe.includes(p.id);
             return (
-              <Card key={p.id} className={arsivde ? "opacity-60" : undefined}>
+              <Card
+                key={p.id}
+                className={`kart-etkilesim ${arsivde ? "opacity-60" : ""}`}
+              >
                 <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-3">
                   {yetki && (
                     <Checkbox
@@ -318,7 +335,7 @@ function Havuz() {
                   )}
                   <div className="min-w-0 flex-1">
                     <button
-                      className="text-left"
+                      className="cursor-pointer text-left"
                       onClick={() => navigate({ to: "/plan/$id", params: { id: p.id } })}
                     >
                       <CardTitle className="text-base hover:underline">
@@ -327,10 +344,15 @@ function Havuz() {
                     </button>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <DurumEtiketi durum={p.durum} />
-                      {k && <Badge variant="secondary">{k.atolye_alani}</Badge>}
-                      {k && <Badge variant="secondary">{k.kod}</Badge>}
+                      {alanAdi && <Badge variant="secondary">{alanAdi}</Badge>}
+                      {k ? (
+                        <Badge variant="secondary">{k.kod}</Badge>
+                      ) : (
+                        p.konu_basligi && <Badge variant="secondary">{p.konu_basligi}</Badge>
+                      )}
                       <Badge variant="secondary">{SINIF_ETIKET[p.yas_grubu] ?? p.yas_grubu}</Badge>
                       <Badge variant="secondary">v{p.versiyon}</Badge>
+
                       <span className="text-muted-foreground">
                         {new Date(p.created_at).toLocaleDateString("tr-TR")}
                       </span>
