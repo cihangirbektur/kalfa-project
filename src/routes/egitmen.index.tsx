@@ -166,7 +166,7 @@ function Egitmen() {
         <div className="grid gap-3 md:grid-cols-2">
           {liste.map((p) => {
             const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
-            const tarih = onayTarihi.get(p.id);
+            const tarih = p.onay_tarihi ?? onayTarihi.get(p.id) ?? p.created_at;
             const yeni = tarih ? new Date(tarih).getTime() > yedigunOnce : false;
             const model =
               p.kural_profili === "GIPSCI"
