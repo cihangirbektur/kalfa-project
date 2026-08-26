@@ -119,6 +119,7 @@ function YeniPlan() {
 
   const [alanId, setAlanId] = useState("");
   const [kazanimId, setKazanimId] = useState("");
+  const [konuBasligi, setKonuBasligi] = useState("");
   const [seviye, setSeviye] = useState<string>("ortaokul");
   const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
   const [ogretim, setOgretim] = useState<string>("GIPSCI");
@@ -135,15 +136,49 @@ function YeniPlan() {
   const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
   const seciliAlan = alanlar.find((a) => a.id === alanId);
+  const program = seciliAlan?.program ?? "DENEYAP Teknoloji Atölyesi";
+  const bilimTr = program === BILIMTR;
+
+  /** Atölye alanı değişince, programa uymayan seçimleri sıfırla. */
+  const alanSec = (yeniId: string) => {
+    const yeni = alanlar.find((a) => a.id === yeniId);
+    const yeniProgram = yeni?.program ?? "DENEYAP Teknoloji Atölyesi";
+    setAlanId(yeniId);
+    setKazanimId("");
+    setKonuBasligi("");
+    if (yeniProgram !== program) {
+      if (yeniProgram === BILIMTR) {
+        setSeviye(BILIMTR_YAS_GRUPLARI[0].deger);
+        setDonem(BILIMTR_PROGRAM_TURLERI[0].deger);
+        setSure(String(BILIMTR_PROGRAM_TURLERI[0].sure));
+      } else {
+        setSeviye("ortaokul");
+        setDonem(PROGRAM_DONEMLERI[0].deger);
+        setSure("90");
+      }
+      if (alanId) toast.info("Program değişti, yaş grubu ve konu seçimini yenileyin.");
+    }
+  };
+
+  const programTuruSec = (v: string) => {
+    setDonem(v);
+    const t = BILIMTR_PROGRAM_TURLERI.find((p) => p.deger === v);
+    if (t) setSure(String(t.sure));
+  };
+
+  const konuSecenekleri = useMemo(
+    () => (bilimTr ? konuBasliklariAl(seciliAlan, seviye) : []),
+    [bilimTr, seciliAlan, seviye],
+  );
 
   const filtreliKazanimlar = useMemo(
     () =>
-      kazanimlar.filter(
-        (k) =>
-          (seviye === "bilimtr_karma" || k.yas_grubu === seviye) &&
-          (!seciliAlan || k.atolye_alani === seciliAlan.ad),
-      ),
-    [kazanimlar, seviye, seciliAlan],
+      bilimTr
+        ? []
+        : kazanimlar.filter(
+            (k) => k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
+          ),
+    [bilimTr, kazanimlar, seviye, seciliAlan],
   );
 
   const aramaliKazanimlar = useMemo(() => {
@@ -158,8 +193,14 @@ function YeniPlan() {
   const secili = kazanimlar.find((k) => k.id === kazanimId);
 
   useEffect(() => {
-    if (kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId)) setKazanimId("");
-  }, [filtreliKazanimlar, kazanimId]);
+    if (!bilimTr && kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId))
+      setKazanimId("");
+  }, [bilimTr, filtreliKazanimlar, kazanimId]);
+
+  useEffect(() => {
+    if (bilimTr && konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
+  }, [bilimTr, konuSecenekleri, konuBasligi]);
+
 
 
   const uret = async () => {
