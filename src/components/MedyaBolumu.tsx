@@ -33,16 +33,29 @@ export function MedyaBolumu(props: Props) {
   const { medyalar, duzenlenebilir } = props;
   const basililar = medyalar.map((m, i) => ({ m, i })).filter(({ m }) => basiliMi(m));
   const dijitaller = medyalar.map((m, i) => ({ m, i })).filter(({ m }) => !basiliMi(m));
+  const eksik = medyaEksikligi(medyalar);
 
   return (
     <div className="space-y-4">
+      {eksik && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800">
+          {eksik}
+        </p>
+      )}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Dijital materyaller</CardTitle>
+          <CardTitle className="text-base">
+            Dijital materyaller{" "}
+            <span className="text-xs font-normal text-muted-foreground">
+              (en az 2 · şu an {dijitaller.length})
+            </span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {dijitaller.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Bu grupta öneri yok.</p>
+            <p className="text-sm text-muted-foreground">
+              Dijital materyal üretilmemiş. Bu plan eksik sayılır.
+            </p>
           ) : (
             dijitaller.map(({ m, i }) => (
               <MedyaKarti key={i} indeks={i} medya={m} {...props} />
@@ -50,6 +63,7 @@ export function MedyaBolumu(props: Props) {
           )}
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader>
