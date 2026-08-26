@@ -164,25 +164,31 @@ function Havuz() {
       .in("id", idler);
     setIslemde(false);
     if (error) {
-      toast.error("Arşivlenemedi: " + error.message);
+      toast.error("Arşivlenemedi: " + error.message + " · Lütfen tekrar deneyin.");
       return;
     }
-    toast.success(`${idler.length} plan arşivlendi.`);
+    toast.success(`${idler.length} plan arşivlendi.`, {
+      action: { label: "Geri Al", onClick: () => void geriAl(idler) },
+    });
     setSecili([]);
     yenile();
   };
 
-  const geriAl = async (id: string) => {
+  const geriAl = async (idler: string | string[]) => {
+    const liste = Array.isArray(idler) ? idler : [idler];
     const { error } = await supabase
       .from("planlar")
       .update({ arsivlendi: false, arsivlenme_tarihi: null })
-      .eq("id", id);
+      .in("id", liste);
     if (error) {
-      toast.error("Geri alınamadı: " + error.message);
+      toast.error("Geri alınamadı: " + error.message + " · Lütfen tekrar deneyin.");
       return;
     }
-    toast.success("Plan arşivden geri alındı.");
+    toast.success(
+      liste.length > 1 ? `${liste.length} plan arşivden geri alındı.` : "Plan arşivden geri alındı.",
+    );
     yenile();
+
   };
 
   const basarisizTemizle = async () => {
