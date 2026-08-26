@@ -226,6 +226,14 @@ function EgitmenPlan() {
           </Button>
         </div>
 
+        <GipsciSerit
+          icerik={icerik}
+          kuralProfili={plan.kural_profili}
+          toplamSure={plan.toplam_sure}
+        />
+
+
+
         <Tabs defaultValue="asamalar">
           <TabsList className="flex flex-wrap">
             <TabsTrigger value="asamalar">Aşamalar</TabsTrigger>
