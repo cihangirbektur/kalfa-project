@@ -181,8 +181,7 @@
     position: relative;
     break-after: page;
     page-break-after: always;
-    min-height: 250mm;
-    padding-bottom: 12mm;
+    padding-bottom: 6mm;
   }
 
   .y-sayfa:last-child {
