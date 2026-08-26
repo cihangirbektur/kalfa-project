@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Kazanim, Plan } from "@/lib/tipler";
+import type { DenetimBulgusu, Kazanim, Plan } from "@/lib/tipler";
 
 export const Route = createFileRoute("/raporlar")({
   head: () => ({
@@ -11,13 +11,16 @@ export const Route = createFileRoute("/raporlar")({
       { title: "Raporlar — KALFA" },
       {
         name: "description",
-        content: "Üretilen atölye planlarının sayısı, onay durumu ve atölye alanına göre dağılımı.",
+        content:
+          "Üretilen atölye planlarının sayısı, onay durumu, ortalama kritik bulgu ve alan bazlı onaylı içerik dağılımı.",
       },
       { property: "og:title", content: "Raporlar — KALFA" },
       {
         property: "og:description",
-        content: "Eğitim yöneticisi için plan üretim ve onay özeti.",
+        content: "Eğitim yöneticisi için plan üretim, denetim ve onay özeti.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Raporlar,
@@ -42,52 +45,76 @@ function Raporlar() {
     },
   });
 
+  const { data: bulgular = [] } = useQuery({
+    queryKey: ["tum-bulgular"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("denetim_bulgulari").select("*");
+      if (error) throw error;
+      return (data ?? []) as unknown as DenetimBulgusu[];
+    },
+  });
+
   const harita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
+  const aktif = planlar.filter((p) => !p.arsivlendi);
 
-  const onayli = planlar.filter((p) => p.durum === "onayli").length;
-  const denetimde = planlar.filter((p) => p.durum === "denetimde").length;
-  const taslak = planlar.filter((p) => p.durum === "taslak").length;
+  const onayli = aktif.filter((p) => p.durum === "onayli").length;
+  const denetimde = aktif.filter((p) => p.durum === "denetimde").length;
 
-  const dagilim = useMemo(() => {
+  const ortalamaKritik = useMemo(() => {
+    const planIdler = new Set(bulgular.map((b) => b.plan_id).filter(Boolean) as string[]);
+    if (planIdler.size === 0) return "0.0";
+    const kritik = bulgular.filter((b) => b.seviye === "kritik" && !b.gecti).length;
+    return (kritik / planIdler.size).toFixed(1);
+  }, [bulgular]);
+
+  const onayliDagilim = useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of planlar) {
+    for (const k of kazanimlar) m.set(k.atolye_alani, m.get(k.atolye_alani) ?? 0);
+    for (const p of aktif) {
+      if (p.durum !== "onayli") continue;
       const alan = (p.kazanim_id ? harita.get(p.kazanim_id)?.atolye_alani : null) ?? "Tanımsız";
       m.set(alan, (m.get(alan) ?? 0) + 1);
     }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]);
-  }, [planlar, harita]);
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"));
+  }, [aktif, harita, kazanimlar]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Raporlar</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Plan üretimi ve onay sürecine dair özet göstergeler.
+          Plan üretimi, denetim ve onay sürecine dair özet göstergeler (arşivlenenler hariç).
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Sayac etiket="Toplam plan" deger={planlar.length} />
-        <Sayac etiket="Onaylı" deger={onayli} />
-        <Sayac etiket="Denetimde" deger={denetimde} />
-        <Sayac etiket="Taslak" deger={taslak} />
+        <Sayac etiket="Toplam plan" deger={String(aktif.length)} />
+        <Sayac etiket="Denetimde" deger={String(denetimde)} />
+        <Sayac etiket="Onaylı" deger={String(onayli)} />
+        <Sayac etiket="Ortalama kritik bulgu" deger={ortalamaKritik} />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Atölye alanına göre dağılım</CardTitle>
+          <CardTitle className="text-base">Atölye alanına göre onaylı plan dağılımı</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Yükleniyor…</p>
-          ) : dagilim.length === 0 ? (
+          ) : onayliDagilim.length === 0 ? (
             <p className="text-sm text-muted-foreground">Henüz plan üretilmedi.</p>
           ) : (
             <ul className="divide-y divide-border text-sm">
-              {dagilim.map(([alan, adet]) => (
+              {onayliDagilim.map(([alan, adet]) => (
                 <li key={alan} className="flex items-center justify-between py-2">
                   <span>{alan}</span>
-                  <span className="font-medium">{adet}</span>
+                  <span
+                    className={
+                      adet === 0 ? "font-medium text-destructive" : "font-medium"
+                    }
+                  >
+                    {adet === 0 ? "içerik eksik" : adet}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -98,7 +125,7 @@ function Raporlar() {
   );
 }
 
-function Sayac({ etiket, deger }: { etiket: string; deger: number }) {
+function Sayac({ etiket, deger }: { etiket: string; deger: string }) {
   return (
     <Card>
       <CardHeader className="pb-2">
