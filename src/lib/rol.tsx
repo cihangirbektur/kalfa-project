@@ -17,19 +17,32 @@ const EGITMEN: MenuOgesi = { yol: "/egitmen", ad: "Eğitmen Görünümü" };
 const RAPORLAR: MenuOgesi = { yol: "/raporlar", ad: "Raporlar" };
 
 export const ROL_MENULERI: Record<Rol, MenuOgesi[]> = {
-  "İçerik Uzmanı": [YENI_PLAN, HAVUZ, DENETIM],
-  "Pedagojik Uzman": [DENETIM, HAVUZ],
+  "İçerik Uzmanı": [YENI_PLAN, HAVUZ],
+  "Pedagojik Uzman": [DENETIM],
   Eğitmen: [EGITMEN],
-  "Eğitim Yöneticisi": [HAVUZ, RAPORLAR],
+  "Eğitim Yöneticisi": [{ yol: "/havuz", ad: "Yönetici Havuzu" }, RAPORLAR],
 };
 
-// Plan detayı, ilgili ekranlara erişebilen roller için açıktır.
+/** Plan detayına ve yaş uyarlamasına erişebilen roller. */
+const PLAN_ERISIMI: Rol[] = ["İçerik Uzmanı", "Pedagojik Uzman", "Eğitim Yöneticisi"];
+
 export function erisimVarMi(rol: Rol, pathname: string) {
   const menu = ROL_MENULERI[rol];
   if (pathname.startsWith("/plan/") || pathname.startsWith("/yas-uyarlama")) {
-    return menu.some((m) => m.yol !== "/");
+    return PLAN_ERISIMI.includes(rol);
   }
   return menu.some((m) => (m.yol === "/" ? pathname === "/" : pathname.startsWith(m.yol)));
+}
+
+/** Arşivleme yetkisi: yönetici her durumu, içerik uzmanı yalnızca taslak/revizyon. */
+export function arsivleyebilirMi(rol: Rol, durum: string) {
+  if (rol === "Eğitim Yöneticisi") return true;
+  if (rol === "İçerik Uzmanı") return durum === "taslak" || durum === "revizyon_istendi";
+  return false;
+}
+
+export function kaliciSilebilirMi(rol: Rol) {
+  return rol === "Eğitim Yöneticisi";
 }
 
 type RolBaglami = { rol: Rol; setRol: (r: Rol) => void };
