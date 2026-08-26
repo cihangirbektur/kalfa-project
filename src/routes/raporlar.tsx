@@ -179,28 +179,57 @@ function Raporlar() {
         <CardHeader>
           <CardTitle className="text-base">Atölye alanına göre onaylı plan dağılımı</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Yükleniyor…</p>
-          ) : onayliDagilim.length === 0 ? (
+          ) : programGruplari.length === 0 ? (
             <p className="text-sm text-muted-foreground">Henüz plan üretilmedi.</p>
           ) : (
-            <ul className="divide-y divide-border text-sm">
-              {onayliDagilim.map(([alan, adet]) => (
-                <li key={alan} className="flex items-center justify-between py-2">
-                  <span>{alan}</span>
-                  <span
-                    className={
-                      adet === 0 ? "font-medium text-destructive" : "font-medium"
-                    }
-                  >
-                    {adet === 0 ? "içerik eksik" : adet}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            programGruplari.map((g) => (
+              <div key={g.program}>
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                  <h3 className="text-sm font-semibold">
+                    {PROGRAM_GRUP_ETIKET[g.program] ?? g.program}
+                  </h3>
+                  <span className="text-sm text-muted-foreground">{g.toplam} onaylı plan</span>
+                </div>
+                <ul className="divide-y divide-border text-sm">
+                  {g.dolu.map(([alan, adet]) => (
+                    <li key={alan} className="flex items-center justify-between py-2">
+                      <span>{alan}</span>
+                      <span className="font-medium">{adet}</span>
+                    </li>
+                  ))}
+                  {g.bos.length > 0 && (
+                    <li className="py-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setAcikGrup((s) => ({ ...s, [g.program]: !s[g.program] }))
+                        }
+                        className="flex w-full items-center justify-between text-left text-muted-foreground hover:text-foreground"
+                      >
+                        <span>Henüz içerik üretilmemiş {g.bos.length} alan</span>
+                        <span className="text-xs">{acikGrup[g.program] ? "Kapat" : "Aç"}</span>
+                      </button>
+                      {acikGrup[g.program] && (
+                        <ul className="mt-2 space-y-1 pl-3 text-muted-foreground">
+                          {g.bos.map((ad) => (
+                            <li key={ad} className="flex items-center justify-between">
+                              <span>{ad}</span>
+                              <span>0 onaylı plan</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ))
           )}
         </CardContent>
+
       </Card>
     </div>
   );
