@@ -368,24 +368,33 @@ function YeniPlan() {
               </SelectContent>
             </Select>
 
-            <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
-              {seciliOgretim.profil === "GIPSCI" ? (
-                <>
-                  <p>{GIPSCI_BILGI_NOTU}</p>
+            {(() => {
+              const bilgi =
+                MODEL_BILGI[seciliOgretim.profil === "GIPSCI" ? "GIPSCI" : seciliOgretim.sablon];
+              const asamaZinciri = (seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ");
+              return (
+                <div className="rounded-lg border border-border bg-muted/60 p-3 text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-foreground">
+                    {bilgi?.ad ?? seciliOgretim.etiket}
+                  </p>
+                  {bilgi?.acilim && <p className="mt-0.5 italic">{bilgi.acilim}</p>}
+                  {asamaZinciri && (
+                    <p className="mt-2">
+                      <span className="font-medium text-foreground">Aşamalar: </span>
+                      {asamaZinciri}
+                    </p>
+                  )}
+                  {seciliOgretim.profil === "GIPSCI" && <p className="mt-2">{GIPSCI_BILGI_NOTU}</p>}
                   <p className="mt-2">
-                    Kaynak: {seciliProfil?.kaynak ?? "T3 Vakfı Araştırma Raporu, Şubat 2026"}
+                    Kaynak:{" "}
+                    {seciliOgretim.profil === "GIPSCI"
+                      ? (seciliProfil?.kaynak ?? bilgi?.kaynak ?? "—")
+                      : (seciliSablon?.kaynak ?? bilgi?.kaynak ?? "—")}
                   </p>
-                </>
-              ) : (
-                <>
-                  <p className="font-medium text-foreground">{seciliSablon?.ad}</p>
-                  <p className="mt-1">
-                    {(seciliSablon?.asamalar ?? []).map((a) => a.ad).join(" → ")}
-                  </p>
-                  <p className="mt-2">Kaynak: {seciliSablon?.kaynak ?? "—"}</p>
-                </>
-              )}
-            </div>
+                </div>
+              );
+            })()}
+
           </div>
 
 
