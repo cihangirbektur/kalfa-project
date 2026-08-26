@@ -635,13 +635,26 @@ function PlanGorunumu() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Input
-                          className="w-20"
-                          value={String(m.adet ?? "")}
-                          readOnly={!duzenlenebilir}
-                          onChange={(ev) => malzemeGuncelle(i, "adet", ev.target.value)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            className="w-16"
+                            inputMode="numeric"
+                            value={String(adetSayisi(m.adet) ?? "")}
+                            readOnly={!duzenlenebilir}
+                            onChange={(ev) =>
+                              malzemeGuncelle(i, "adet", Number(ev.target.value) || 0)
+                            }
+                          />
+                          <Input
+                            className="w-24"
+                            placeholder="adet"
+                            value={adetBirimi(m)}
+                            readOnly={!duzenlenebilir}
+                            onChange={(ev) => malzemeGuncelle(i, "birim", ev.target.value)}
+                          />
+                        </div>
                       </TableCell>
+
                       <TableCell>
                         <Input
                           className="w-24"
