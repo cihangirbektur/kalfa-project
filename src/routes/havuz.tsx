@@ -26,15 +26,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { BosDurum, ListeIskeleti } from "@/components/Iskelet";
 import { arsivleyebilirMi, kaliciSilebilirMi, useRol } from "@/lib/rol";
 import {
   DURUM_ETIKET,
   BILIMTR_YAS_GRUPLARI,
   SINIF_DUZEYLERI,
   SINIF_ETIKET,
+  type AtolyeAlani,
   type Kazanim,
   type Plan,
 } from "@/lib/tipler";
+
 
 export const Route = createFileRoute("/havuz")({
   head: () => ({
