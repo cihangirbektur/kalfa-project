@@ -353,3 +353,48 @@ export const BASILI_TIP_ETIKET: Record<string, string> = {
   oyun_mati: "Oyun Matı",
   etiket: "Etiket",
 };
+
+/** Denetim bulgularının dayandığı kaynak metinleri (kural numarasına göre). */
+export const KURAL_KAYNAKLARI: Record<number, string> = {
+  1: "Kaynak: 5E öğretim modeli (Bybee ve BSCS, 1987)",
+  2: "Kaynak: T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu, Şubat 2026 — sorgulama boyutu ICI ölçeğinde en zayıf alan (1.05)",
+  3: "Kaynak: T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu, Şubat 2026 — sorgulama boyutu ICI ölçeğinde en zayıf alan (1.05)",
+  4: "Kaynak: GiPSci modeli — rehberli sorgulama ve ürün tabanlı öğrenme ilkesi",
+  5: "Kaynak: GiPSci modeli — rehberli sorgulama ve ürün tabanlı öğrenme ilkesi",
+  7: "Kaynak: atölye güvenlik uygulaması",
+  9: "Kaynak: T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu, Şubat 2026 — sorgulama boyutu ICI ölçeğinde en zayıf alan (1.05)",
+  11: "Kaynak: T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu, Şubat 2026 — sorgulama boyutu ICI ölçeğinde en zayıf alan (1.05)",
+};
+
+/** Öğretim modeli bilgi kartı içerikleri. */
+export const MODEL_BILGI: Record<
+  string,
+  { ad: string; acilim: string; kaynak: string }
+> = {
+  GIPSCI: {
+    ad: "GiPSci",
+    acilim: "Guided Inquiry and Product-based Science in Science Centers",
+    kaynak: "T3 Vakfı Eğitim ve Ar-Ge Koordinatörlüğü Araştırma Raporu, Şubat 2026",
+  },
+  "5E": {
+    ad: "5E",
+    acilim: "Engage · Explore · Explain · Elaborate · Evaluate",
+    kaynak: "Bybee ve BSCS, 1987",
+  },
+  "7E": {
+    ad: "7E",
+    acilim: "Elicit · Engage · Explore · Explain · Elaborate · Evaluate · Extend",
+    kaynak: "Eisenkraft, 2003",
+  },
+};
+
+/** Üretimde beklenen dijital medya tipleri ve alt sınırlar. */
+export const DIJITAL_MEDYA_TIPLERI = [
+  "video",
+  "animasyon",
+  "simulasyon",
+  "interaktif_arac",
+  "dijital_quiz",
+] as const;
+
+export const MEDYA_ALT_SINIR = { dijital: 2, basili: 3 };
