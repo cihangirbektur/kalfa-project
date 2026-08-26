@@ -381,6 +381,14 @@ function PlanGorunumu() {
         )}
       </div>
 
+      <GipsciSerit
+        icerik={icerik}
+        kuralProfili={plan.kural_profili}
+        toplamSure={toplamSure}
+      />
+
+
+
       {plan.durum === "revizyon_istendi" && denetimQ.data?.sonTur && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-4">
           <p className="text-sm font-semibold text-amber-700">
