@@ -54,6 +54,19 @@ function Raporlar() {
     },
   });
 
+  const { data: bildirimler = [] } = useQuery({
+    queryKey: ["tum-geribildirim"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("geri_bildirimler").select("*");
+      if (error) throw error;
+      return (data ?? []) as unknown as GeriBildirim[];
+    },
+  });
+
+  const sahaOzeti = useMemo(() => bildirimOzeti(bildirimleriCoz(bildirimler)), [bildirimler]);
+
+
+
   const harita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
   const aktif = planlar.filter((p) => !p.arsivlendi);
 
