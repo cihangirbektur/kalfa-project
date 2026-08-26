@@ -218,15 +218,24 @@ function PlanGorunumu() {
         .insert(bulgular.map((b) => ({ ...b, tur_id: tur.id })) as never);
       if (yazHata) throw new Error(yazHata.message);
 
+      // Sürüm yalnızca revizyon sonrası tekrar gönderimde artar.
+      const revizyonSonrasi = plan.durum === "revizyon_istendi";
+      const yeniVersiyon = revizyonSonrasi ? (plan.versiyon ?? 1) + 1 : (plan.versiyon ?? 1);
       const { error: durumHata } = await supabase
         .from("planlar")
-        .update({ durum: "denetimde" })
+        .update({ durum: "denetimde", versiyon: yeniVersiyon })
         .eq("id", plan.id);
       if (durumHata) throw new Error(durumHata.message);
 
       denetimQ.refetch();
-      toast.success(`Denetim tamamlandı (${yeniTurNo}. tur).`);
+      refetch();
+      toast.success(
+        revizyonSonrasi
+          ? `Denetim tamamlandı (${yeniTurNo}. tur) · plan v${yeniVersiyon} olarak gönderildi.`
+          : `Denetim tamamlandı (${yeniTurNo}. tur).`,
+      );
       navigate({ to: "/denetim", search: { plan: plan.id } });
+
 
     } catch (e) {
       const mesaj = e instanceof Error ? e.message : "Denetim başarısız oldu.";
