@@ -109,10 +109,35 @@ function PlanGorunumu() {
     },
   });
 
+  const denetimQ = useQuery({
+    queryKey: ["plan-denetim", id],
+    queryFn: async () => {
+      const { data: turlar, error } = await supabase
+        .from("denetim_turlari")
+        .select("*")
+        .eq("plan_id", id)
+        .order("tur_no", { ascending: false });
+      if (error) throw error;
+      const liste = (turlar ?? []) as unknown as DenetimTuru[];
+      const sonTur = liste[0] ?? null;
+      let bulgular: DenetimBulgusu[] = [];
+      if (sonTur) {
+        const { data: b } = await supabase
+          .from("denetim_bulgulari")
+          .select("*")
+          .eq("tur_id", sonTur.id)
+          .order("kural_no");
+        bulgular = (b ?? []) as unknown as DenetimBulgusu[];
+      }
+      return { turlar: liste, sonTur, bulgular };
+    },
+  });
+
   const [icerik, setIcerik] = useState<PlanIcerik>({});
   useEffect(() => {
     if (data?.plan) setIcerik(data.plan.icerik ?? {});
   }, [data?.plan]);
+
 
   if (isLoading || !data) {
     return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
