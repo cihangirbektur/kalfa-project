@@ -39,17 +39,18 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
   const kazanimMetni = kazanim?.metin ?? icerik.kazanim?.metin ?? "—";
   const alan = alanAdi ?? kazanim?.atolye_alani ?? plan.konu_basligi ?? "—";
 
-  let sayfaNo = 0;
-  const Altbilgi = () => {
-    sayfaNo += 1;
-    return (
-      <div className="y-altbilgi">
-        {baslik} · {surum} · Sayfa {sayfaNo}
-      </div>
-    );
-  };
-
   const goster = (b: YazdirKapsami) => kapsam === "tum" || kapsam === b;
+
+  const sayfalar = ["kapak", "akis", "etkinlik", "malzeme", "kartlar", "olcme"].filter((k) =>
+    kapsam === "tum" ? true : k === kapsam,
+  );
+  const sayfaNo = (k: string) => sayfalar.indexOf(k) + 1;
+
+  const Altbilgi = ({ k }: { k: string }) => (
+    <div className="y-altbilgi">
+      {baslik} · {surum} · Sayfa {sayfaNo(k)}
+    </div>
+  );
 
   return (
     <div className="kalfa-yazdir">
@@ -99,7 +100,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
               </tr>
             </tbody>
           </table>
-          <Altbilgi />
+          <Altbilgi k="kapak" />
         </section>
       )}
 
@@ -144,7 +145,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
               )}
             </div>
           ))}
-          <Altbilgi />
+          <Altbilgi k="akis" />
         </section>
       )}
 
@@ -187,7 +188,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
               )}
             </div>
           ))}
-          <Altbilgi />
+          <Altbilgi k="etkinlik" />
         </section>
       )}
 
@@ -229,7 +230,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
               ? ` · ${maliyet.hesaplanamayan} satır hesaplanamadı`
               : ""}
           </p>
-          <Altbilgi />
+          <Altbilgi k="malzeme" />
         </section>
       )}
 
@@ -246,7 +247,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
           {icerik.merak_tetikleyicileri?.merak_kutusu_notu && (
             <p className="y-not">{icerik.merak_tetikleyicileri.merak_kutusu_notu}</p>
           )}
-          <Altbilgi />
+          <Altbilgi k="kartlar" />
         </section>
       )}
 
@@ -315,7 +316,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
               ))}
             </tbody>
           </table>
-          <Altbilgi />
+          <Altbilgi k="olcme" />
         </section>
       )}
     </div>
