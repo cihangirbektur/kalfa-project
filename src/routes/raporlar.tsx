@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
+import { PROGRAM_GRUP_ETIKET, PROGRAM_SIRASI } from "@/lib/tipler";
+import type { AtolyeAlani, DenetimBulgusu, GeriBildirim, Kazanim, Plan } from "@/lib/tipler";
 import { bildirimOzeti, bildirimleriCoz } from "@/lib/geribildirim";
 
 export const Route = createFileRoute("/raporlar")({
@@ -63,6 +64,8 @@ function Raporlar() {
       return (data ?? []) as unknown as GeriBildirim[];
     },
   });
+
+  const [acikGrup, setAcikGrup] = useState<Record<string, boolean>>({});
 
   const sahaOzeti = useMemo(() => bildirimOzeti(bildirimleriCoz(bildirimler)), [bildirimler]);
 
