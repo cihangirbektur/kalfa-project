@@ -427,20 +427,26 @@ function PlanGorunumu() {
         <div className="rounded-xl border bg-card p-4">
           <p className="text-sm font-medium">Denetim geçmişi</p>
           <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            {(denetimQ.data?.turlar ?? []).map((t) => (
-              <li key={t.id}>
-                {t.tur_no}. tur · {new Date(t.created_at).toLocaleDateString("tr-TR")} ·{" "}
-                {t.kritik_sayisi} kritik / {t.uyari_sayisi} uyarı ·{" "}
-                {t.karar === "onayli"
-                  ? "onaylandı"
-                  : t.karar === "revizyon_istendi"
-                    ? "revizyon istendi"
-                    : "karar bekliyor"}
-              </li>
-            ))}
+            {(() => {
+              const turlar = denetimQ.data?.turlar ?? [];
+              const surumler = turSurumleri(turlar);
+              return turlar.map((t) => (
+                <li key={t.id}>
+                  {t.tur_no}. tur · v{surumler.get(t.id) ?? 1} ·{" "}
+                  {new Date(t.created_at).toLocaleDateString("tr-TR")} · {t.kritik_sayisi} kritik /{" "}
+                  {t.uyari_sayisi} uyarı · {kararEtiketi(t.karar ?? null).toLocaleLowerCase("tr")}
+                </li>
+              ));
+            })()}
           </ul>
         </div>
       )}
+
+      <GeriBildirimListesi
+        planId={plan.id}
+        baslik="Saha geri bildirimleri (eğitmenlerden)"
+      />
+
 
 
 
