@@ -331,3 +331,13 @@ export const SEVIYE_ETIKET: Record<string, string> = {
   uyari: "Uyarı",
   bilgi: "Bilgi",
 };
+
+export const BASILI_TIP_ETIKET: Record<string, string> = {
+  calisma_yapragi: "Çalışma Yaprağı",
+  soru_karti_destesi: "Soru Kartı Destesi",
+  poster: "Poster",
+  yonerge_karti: "Yönerge Kartı",
+  rubrik_formu: "Rubrik Formu",
+  oyun_mati: "Oyun Matı",
+  etiket: "Etiket",
+};
