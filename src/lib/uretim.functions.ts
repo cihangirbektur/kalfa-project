@@ -255,7 +255,9 @@ export const planUret = createServerFn({ method: "POST" })
 
     const sistemMetni =
       SISTEM_TALIMATI +
-      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI);
+      (data.kural_profili === "GIPSCI" ? GIPSCI_KURALLARI : KLASIK_KURALLARI) +
+      (data.kazanim_turet ? KAZANIM_TURETME : "");
+
 
     const cagir = async () => {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
