@@ -21,7 +21,7 @@ import {
   type Plan,
 } from "@/lib/tipler";
 
-export const Route = createFileRoute("/egitmen")({
+export const Route = createFileRoute("/egitmen/")({
   head: () => ({
     meta: [
       { title: "Eğitmen Görünümü — KALFA" },
