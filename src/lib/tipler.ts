@@ -297,6 +297,7 @@ export type DenetimBulgusu = {
   kanit_alintisi: string | null;
   ilgili_asama: string | null;
   oneri: string | null;
+  tur_id?: string | null;
   created_at: string;
 };
 
