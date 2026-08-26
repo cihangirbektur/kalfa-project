@@ -1,14 +1,11 @@
-import { DURUM_ETIKET } from "@/lib/tipler";
+import { DURUM_ETIKET, DURUM_ROZET_STIL } from "@/lib/tipler";
 
+/**
+ * Durum rozetleri marka turuncusundan tamamen ayrı bir renk ailesi kullanır;
+ * turuncu yalnızca markaya (sol bar, ana buton, aktif gezinme) aittir.
+ */
 export function DurumEtiketi({ durum }: { durum: string }) {
-  const stil =
-    durum === "onayli"
-      ? "bg-primary/10 text-primary"
-      : durum === "denetimde"
-        ? "bg-accent/15 text-accent"
-        : durum === "revizyon_istendi"
-          ? "bg-amber-500/15 text-amber-700"
-          : "bg-muted text-muted-foreground";
+  const stil = DURUM_ROZET_STIL[durum] ?? DURUM_ROZET_STIL.taslak;
 
   return (
     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${stil}`}>
