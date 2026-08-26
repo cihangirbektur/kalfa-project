@@ -22,18 +22,23 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { planUret } from "@/lib/uretim.functions";
 import {
+  BILIMTR,
+  BILIMTR_KAYNAK_NOTU,
+  BILIMTR_PROGRAM_TURLERI,
+  BILIMTR_PROGRAM_TURU_ETIKET,
+  BILIMTR_YAS_GRUPLARI,
+  DENEYAP_DUZEYLERI,
   GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
-  KONU_BASLIGI_YOK_NOTU,
   MODEL_BILGI,
   OGRETIM_SECENEKLERI,
   PROGRAM_DONEMLERI,
   PROGRAM_DONEMI_ETIKET,
   PROGRAM_GRUP_ETIKET,
   PROGRAM_SIRASI,
-  SINIF_DUZEYLERI,
   SINIF_ETIKET,
   SINIF_YAS,
+  konuBasliklariAl,
   type AsamaSablonu,
   type AtolyeAlani,
   type Kazanim,
@@ -41,6 +46,7 @@ import {
   type OgretimModeli,
   type PlanIcerik,
 } from "@/lib/tipler";
+
 
 
 export const Route = createFileRoute("/")({
