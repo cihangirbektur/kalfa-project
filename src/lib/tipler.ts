@@ -106,7 +106,10 @@ export type UrunOdakliCikti = {
 export type PlanIcerik = {
   plan_basligi?: string;
   kazanim?: { kod: string; metin: string; bloom_seviyesi: string };
-  seviye?: string;
+  /** Bilim Türkiye planlarında kazanım konu başlığından türetilir. */
+  kazanim_turetildi?: boolean;
+  konu_basligi?: string;
+
   model?: string;
   toplam_sure_dk?: number;
   ogrenci_sayisi?: number;
