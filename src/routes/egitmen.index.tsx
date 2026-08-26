@@ -178,7 +178,7 @@ function Egitmen() {
             return (
               <Card
                 key={p.id}
-                className="cursor-pointer transition-colors hover:border-accent"
+                className="kart-etkilesim cursor-pointer transition-colors hover:border-accent"
                 onClick={() => navigate({ to: "/egitmen/$id", params: { id: p.id } })}
               >
                 <CardHeader className="space-y-3">
