@@ -134,7 +134,7 @@ function EgitmenPlan() {
     },
   });
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Yükleniyor…</p>;
+  if (isLoading) return <DetayIskeleti />;
 
   if (!data) {
     return (
