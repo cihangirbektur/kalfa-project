@@ -1,6 +1,6 @@
 import type { Kazanim, Plan, PlanIcerik } from "@/lib/tipler";
 import { ETKINLIK_TIP_ETIKET, SINIF_ROZET } from "@/lib/tipler";
-import { adetGosterim, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
+import { adetGosterim, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 
 export const YAZDIR_KAPSAMLARI = [
   { deger: "tum", etiket: "Tüm plan" },
@@ -321,5 +321,3 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
     </div>
   );
 }
-
-export { adetSayisi };
