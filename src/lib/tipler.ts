@@ -131,6 +131,8 @@ export type Kazanim = {
   kategori: string;
 };
 
+export type KonuBasliklari = string[] | Record<string, string[]>;
+
 export type AtolyeAlani = {
   id: string;
   ad: string;
@@ -138,7 +140,8 @@ export type AtolyeAlani = {
   program: string;
   sure_hafta: number;
   amac: string | null;
-  konu_basliklari: string[];
+  konu_basliklari: KonuBasliklari;
+  kaynak?: string | null;
   kitap_ortaokul_url: string | null;
   kitap_lise_url: string | null;
 };
@@ -146,12 +149,50 @@ export type AtolyeAlani = {
 export const PROGRAM_SIRASI = ["Bilim Türkiye", "DENEYAP Teknoloji Atölyesi"] as const;
 
 export const PROGRAM_GRUP_ETIKET: Record<string, string> = {
-  "Bilim Türkiye": "Bilim Türkiye Atölye Temaları",
+  "Bilim Türkiye": "Bilim Türkiye Atölyeleri",
   "DENEYAP Teknoloji Atölyesi": "DENEYAP Teknoloji Atölyesi Eğitim Alanları",
 };
 
-export const KONU_BASLIGI_YOK_NOTU =
-  "Bu tema için resmî konu başlıkları henüz sisteme tanımlı değil; üretim tema tanımı üzerinden yapılır. Konu başlıkları Eğitim ve Ar-Ge Koordinatörlüğü'nden temin edildiğinde tek veri kaydıyla eklenir.";
+export const BILIMTR = "Bilim Türkiye";
+
+/** Bilim Türkiye yaş grupları (konu_basliklari jsonb anahtarlarıyla birebir). */
+export const BILIMTR_YAS_GRUPLARI = [
+  { deger: "6-8", etiket: "6 - 8 Yaş" },
+  { deger: "9-11", etiket: "9 - 11 Yaş" },
+  { deger: "12-14", etiket: "12 - 14 Yaş" },
+] as const;
+
+export const BILIMTR_YAS_ETIKET: Record<string, string> = Object.fromEntries(
+  BILIMTR_YAS_GRUPLARI.map((y) => [y.deger, y.etiket]),
+);
+
+/** Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği */
+export const BILIMTR_PROGRAM_TURLERI = [
+  { deger: "bir_saatlik", etiket: "Bir saatlik atölye", sure: 60 },
+  { deger: "paket", etiket: "Paket program", sure: 120 },
+  { deger: "donemlik", etiket: "Dönemlik eğitim", sure: 90 },
+  { deger: "tematik", etiket: "Tematik atölye", sure: 90 },
+] as const;
+
+export const BILIMTR_PROGRAM_TURU_ETIKET: Record<string, string> = Object.fromEntries(
+  BILIMTR_PROGRAM_TURLERI.map((p) => [p.deger, p.etiket]),
+);
+
+export const BILIMTR_KAYNAK_NOTU =
+  "Konu başlıkları t3bilimturkiye.org/tr/atolyeler adresinde yayımlanan resmî atölye içeriklerinden alınmıştır.";
+
+/** Seçilen atölye ve yaş grubuna ait konu başlıklarını döndürür. */
+export function konuBasliklariAl(
+  alan: Pick<AtolyeAlani, "konu_basliklari"> | undefined,
+  yasGrubu?: string,
+): string[] {
+  const kb = alan?.konu_basliklari;
+  if (!kb) return [];
+  if (Array.isArray(kb)) return kb;
+  if (yasGrubu && Array.isArray(kb[yasGrubu])) return kb[yasGrubu];
+  return Object.values(kb).flat();
+}
+
 
 export type AsamaSablonu = {
   id: string;
