@@ -498,19 +498,24 @@ function YeniPlan() {
 
 
           <div className="space-y-2">
-            <Label>Program dönemi</Label>
-            <Select value={donem} onValueChange={setDonem}>
+            <Label>{bilimTr ? "Program türü" : "Program dönemi"}</Label>
+            <Select value={donem} onValueChange={bilimTr ? programTuruSec : setDonem}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {PROGRAM_DONEMLERI.map((p) => (
+                {(bilimTr ? BILIMTR_PROGRAM_TURLERI : PROGRAM_DONEMLERI).map((p) => (
                   <SelectItem key={p.deger} value={p.deger}>
                     {p.etiket}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {bilimTr && (
+              <p className="text-xs text-muted-foreground">
+                Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -532,33 +537,33 @@ function YeniPlan() {
             <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className="bg-accent text-accent-foreground">{seciliAlan.ad}</Badge>
-                <Badge variant="secondary">
-                  {seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi"}
-                </Badge>
+                <Badge variant="secondary">{program}</Badge>
                 <Badge variant="secondary">{KATEGORI_ETIKET[seciliAlan.kategori]}</Badge>
                 {seciliAlan.sure_hafta > 0 && (
                   <Badge variant="secondary">{seciliAlan.sure_hafta} hafta</Badge>
                 )}
               </div>
-              {(seciliAlan.konu_basliklari ?? []).length > 0 ? (
+              {seciliAlan.amac && (
+                <p className="mt-3 text-sm text-muted-foreground">{seciliAlan.amac}</p>
+              )}
+              {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).length > 0 && (
                 <>
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Konu başlıkları
+                    Konu başlıkları{bilimTr ? ` · ${SINIF_ETIKET[seviye] ?? seviye}` : ""}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {(seciliAlan.konu_basliklari ?? []).map((k) => (
+                    {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).map((k) => (
                       <Badge key={k} variant="secondary" className="font-normal">
                         {k}
                       </Badge>
                     ))}
                   </div>
                 </>
-              ) : (
-                <p className="mt-3 text-xs text-muted-foreground">{KONU_BASLIGI_YOK_NOTU}</p>
               )}
-
+              {bilimTr && <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>}
             </div>
           )}
+
 
           {secili && (
             <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
