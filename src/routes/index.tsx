@@ -204,8 +204,12 @@ function YeniPlan() {
 
 
   const uret = async () => {
-    if (!seciliAlan || !secili || !seciliSablon) {
-      toast.error("Atölye alanı, kazanım ve öğretim modeli seçilmelidir.");
+    if (!seciliAlan || !seciliSablon || (bilimTr ? !konuBasligi : !secili)) {
+      toast.error(
+        bilimTr
+          ? "Atölye, yaş grubu, konu başlığı ve öğretim modeli seçilmelidir."
+          : "Atölye alanı, kazanım ve öğretim modeli seçilmelidir.",
+      );
       return;
     }
     setHata(false);
@@ -217,12 +221,14 @@ function YeniPlan() {
       const cevap = await uretFn({
         data: {
           atolye_alani: seciliAlan.ad,
-          program: seciliAlan.program ?? "DENEYAP Teknoloji Atölyesi",
-          konu_basliklari: seciliAlan.konu_basliklari ?? [],
+          program,
+          konu_basliklari: konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined),
           sure_hafta: seciliAlan.sure_hafta ?? 0,
-          kazanim_kodu: secili.kod,
-          kazanim_metni: secili.metin,
-          bloom_seviyesi: secili.bloom_seviyesi,
+          konu_basligi: bilimTr ? konuBasligi : "",
+          kazanim_turet: bilimTr,
+          kazanim_kodu: secili?.kod ?? "",
+          kazanim_metni: secili?.metin ?? "",
+          bloom_seviyesi: secili?.bloom_seviyesi ?? "",
           seviye: SINIF_ETIKET[seviye] ?? seviye,
           yas_araligi: SINIF_YAS[seviye] ?? "",
           model_adi: seciliOgretim.etiket,
@@ -236,14 +242,19 @@ function YeniPlan() {
           })),
           toplam_sure: toplamSure,
           ogrenci_sayisi: sayi,
-          program_donemi: PROGRAM_DONEMI_ETIKET[donem] ?? donem,
+          program_donemi: bilimTr
+            ? (BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem)
+            : (PROGRAM_DONEMI_ETIKET[donem] ?? donem),
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
+      if (bilimTr) icerik.kazanim_turetildi = true;
       const { data, error } = await supabase
         .from("planlar")
         .insert({
-          kazanim_id: kazanimId,
+          kazanim_id: bilimTr ? null : kazanimId,
+          atolye_alani_id: seciliAlan.id,
+          konu_basligi: bilimTr ? konuBasligi : null,
           model_id: eskiModel?.id ?? null,
           asama_sablonu: seciliOgretim.sablon,
           kural_profili: seciliOgretim.profil,
@@ -254,10 +265,10 @@ function YeniPlan() {
           durum: "taslak",
           versiyon: 1,
           icerik: icerik as never,
-
         })
         .select("id")
         .single();
+
       if (error) throw new Error(error.message);
       toast.success("Atölye planı üretildi.");
       navigate({ to: "/plan/$id", params: { id: data.id } });
