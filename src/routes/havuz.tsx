@@ -108,11 +108,25 @@ function Havuz() {
     },
   });
 
+  const { data: atolyeAlanlari = [] } = useQuery({
+    queryKey: ["atolye_alanlari"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("atolye_alanlari").select("*").order("ad");
+      if (error) throw error;
+      return data as unknown as AtolyeAlani[];
+    },
+  });
+
   const kazanimHarita = useMemo(() => new Map(kazanimlar.map((k) => [k.id, k])), [kazanimlar]);
+  const alanHarita = useMemo(
+    () => new Map(atolyeAlanlari.map((a) => [a.id, a])),
+    [atolyeAlanlari],
+  );
   const alanlar = useMemo(
     () => Array.from(new Set(kazanimlar.map((k) => k.atolye_alani))),
     [kazanimlar],
   );
+
 
   const arsivde = sekme === "arsiv";
 
