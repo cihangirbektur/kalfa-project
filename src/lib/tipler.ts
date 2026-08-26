@@ -55,6 +55,7 @@ export type Etkinlik = {
 export type Malzeme = {
   ad: string;
   adet: string | number;
+  birim?: string;
   tahmini_birim_maliyet_tl: number;
   hazirlik_suresi_dk: number;
   guvenlik_notu: string;
@@ -63,12 +64,21 @@ export type Malzeme = {
 };
 
 export type Medya = {
+  ad?: string;
   tip: string;
   kategori: string;
   aciklama: string;
   arama_terimi: string;
+  onerilen_kaynak?: string;
   kullanilacak_asama: string;
+  /** Basılı materyal alanları */
+  ne_icerir?: string;
+  sayfa_sayisi?: number | string;
+  baski_notu?: string;
+  /** Kullanıcı isteğiyle üretilen görselin depolama yolu */
+  gorsel_yolu?: string;
 };
+
 
 export type SurecOdakli = { ne_gozlemlenecek: string; yansitici_arac: string };
 
@@ -202,6 +212,7 @@ export type Plan = {
   kural_profili?: string;
   arsivlendi?: boolean;
   arsivlenme_tarihi?: string | null;
+  onay_tarihi?: string | null;
   icerik: PlanIcerik;
   created_at: string;
 };
@@ -320,4 +331,14 @@ export const SEVIYE_ETIKET: Record<string, string> = {
   kritik: "Kritik",
   uyari: "Uyarı",
   bilgi: "Bilgi",
+};
+
+export const BASILI_TIP_ETIKET: Record<string, string> = {
+  calisma_yapragi: "Çalışma Yaprağı",
+  soru_karti_destesi: "Soru Kartı Destesi",
+  poster: "Poster",
+  yonerge_karti: "Yönerge Kartı",
+  rubrik_formu: "Rubrik Formu",
+  oyun_mati: "Oyun Matı",
+  etiket: "Etiket",
 };

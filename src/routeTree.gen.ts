@@ -11,10 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DenetimRouteImport } from './routes/denetim'
-import { Route as EgitmenRouteImport } from './routes/egitmen'
 import { Route as HavuzRouteImport } from './routes/havuz'
 import { Route as RaporlarRouteImport } from './routes/raporlar'
 import { Route as YasUyarlamaRouteImport } from './routes/yas-uyarlama'
+import { Route as ApiGorselUretRouteImport } from './routes/api/gorsel-uret'
+import { Route as EgitmenIndexRouteImport } from './routes/egitmen.index'
 import { Route as EgitmenIdRouteImport } from './routes/egitmen.$id'
 import { Route as PlanIdRouteImport } from './routes/plan.$id'
 
@@ -26,11 +27,6 @@ const IndexRoute = IndexRouteImport.update({
 const DenetimRoute = DenetimRouteImport.update({
   id: '/denetim',
   path: '/denetim',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EgitmenRoute = EgitmenRouteImport.update({
-  id: '/egitmen',
-  path: '/egitmen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HavuzRoute = HavuzRouteImport.update({
@@ -48,10 +44,20 @@ const YasUyarlamaRoute = YasUyarlamaRouteImport.update({
   path: '/yas-uyarlama',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGorselUretRoute = ApiGorselUretRouteImport.update({
+  id: '/api/gorsel-uret',
+  path: '/api/gorsel-uret',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EgitmenIndexRoute = EgitmenIndexRouteImport.update({
+  id: '/egitmen/',
+  path: '/egitmen/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EgitmenIdRoute = EgitmenIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => EgitmenRoute,
+  id: '/egitmen/$id',
+  path: '/egitmen/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PlanIdRoute = PlanIdRouteImport.update({
   id: '/plan/$id',
@@ -62,75 +68,83 @@ const PlanIdRoute = PlanIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/denetim': typeof DenetimRoute
-  '/egitmen': typeof EgitmenRouteWithChildren
   '/havuz': typeof HavuzRoute
   '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/api/gorsel-uret': typeof ApiGorselUretRoute
   '/egitmen/$id': typeof EgitmenIdRoute
   '/plan/$id': typeof PlanIdRoute
+  '/egitmen/': typeof EgitmenIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/denetim': typeof DenetimRoute
-  '/egitmen': typeof EgitmenRouteWithChildren
   '/havuz': typeof HavuzRoute
   '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/api/gorsel-uret': typeof ApiGorselUretRoute
   '/egitmen/$id': typeof EgitmenIdRoute
   '/plan/$id': typeof PlanIdRoute
+  '/egitmen': typeof EgitmenIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/denetim': typeof DenetimRoute
-  '/egitmen': typeof EgitmenRouteWithChildren
   '/havuz': typeof HavuzRoute
   '/raporlar': typeof RaporlarRoute
   '/yas-uyarlama': typeof YasUyarlamaRoute
+  '/api/gorsel-uret': typeof ApiGorselUretRoute
   '/egitmen/$id': typeof EgitmenIdRoute
   '/plan/$id': typeof PlanIdRoute
+  '/egitmen/': typeof EgitmenIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/denetim'
-    | '/egitmen'
     | '/havuz'
     | '/raporlar'
     | '/yas-uyarlama'
+    | '/api/gorsel-uret'
     | '/egitmen/$id'
     | '/plan/$id'
+    | '/egitmen/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/denetim'
-    | '/egitmen'
     | '/havuz'
     | '/raporlar'
     | '/yas-uyarlama'
+    | '/api/gorsel-uret'
     | '/egitmen/$id'
     | '/plan/$id'
+    | '/egitmen'
   id:
     | '__root__'
     | '/'
     | '/denetim'
-    | '/egitmen'
     | '/havuz'
     | '/raporlar'
     | '/yas-uyarlama'
+    | '/api/gorsel-uret'
     | '/egitmen/$id'
     | '/plan/$id'
+    | '/egitmen/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DenetimRoute: typeof DenetimRoute
-  EgitmenRoute: typeof EgitmenRouteWithChildren
   HavuzRoute: typeof HavuzRoute
   RaporlarRoute: typeof RaporlarRoute
   YasUyarlamaRoute: typeof YasUyarlamaRoute
+  ApiGorselUretRoute: typeof ApiGorselUretRoute
+  EgitmenIdRoute: typeof EgitmenIdRoute
   PlanIdRoute: typeof PlanIdRoute
+  EgitmenIndexRoute: typeof EgitmenIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -147,13 +161,6 @@ declare module '@tanstack/react-router' {
       path: '/denetim'
       fullPath: '/denetim'
       preLoaderRoute: typeof DenetimRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/egitmen': {
-      id: '/egitmen'
-      path: '/egitmen'
-      fullPath: '/egitmen'
-      preLoaderRoute: typeof EgitmenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/havuz': {
@@ -177,12 +184,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof YasUyarlamaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/gorsel-uret': {
+      id: '/api/gorsel-uret'
+      path: '/api/gorsel-uret'
+      fullPath: '/api/gorsel-uret'
+      preLoaderRoute: typeof ApiGorselUretRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/egitmen/': {
+      id: '/egitmen/'
+      path: '/egitmen'
+      fullPath: '/egitmen/'
+      preLoaderRoute: typeof EgitmenIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/egitmen/$id': {
       id: '/egitmen/$id'
-      path: '/$id'
+      path: '/egitmen/$id'
       fullPath: '/egitmen/$id'
       preLoaderRoute: typeof EgitmenIdRouteImport
-      parentRoute: typeof EgitmenRoute
+      parentRoute: typeof rootRouteImport
     }
     '/plan/$id': {
       id: '/plan/$id'
@@ -194,25 +215,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface EgitmenRouteChildren {
-  EgitmenIdRoute: typeof EgitmenIdRoute
-}
-
-const EgitmenRouteChildren: EgitmenRouteChildren = {
-  EgitmenIdRoute: EgitmenIdRoute,
-}
-
-const EgitmenRouteWithChildren =
-  EgitmenRoute._addFileChildren(EgitmenRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DenetimRoute: DenetimRoute,
-  EgitmenRoute: EgitmenRouteWithChildren,
   HavuzRoute: HavuzRoute,
   RaporlarRoute: RaporlarRoute,
   YasUyarlamaRoute: YasUyarlamaRoute,
+  ApiGorselUretRoute: ApiGorselUretRoute,
+  EgitmenIdRoute: EgitmenIdRoute,
   PlanIdRoute: PlanIdRoute,
+  EgitmenIndexRoute: EgitmenIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

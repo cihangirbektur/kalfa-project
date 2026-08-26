@@ -10,16 +10,17 @@ import {
 } from "@/components/ui/select";
 
 export function Kabuk({ children }: { children: ReactNode }) {
-  const { rol, setRol } = useRol();
+  const { rol, setRol, hazir } = useRol();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const gezinme = ROL_MENULERI[rol];
 
   useEffect(() => {
+    if (!hazir) return;
     if (erisimVarMi(rol, pathname)) return;
     const ilk = gezinme[0];
     if (ilk) navigate({ to: ilk.yol });
-  }, [rol, pathname, gezinme, navigate]);
+  }, [rol, hazir, pathname, gezinme, navigate]);
 
   return (
     <div className="flex min-h-screen bg-background">

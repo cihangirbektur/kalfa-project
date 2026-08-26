@@ -317,6 +317,7 @@ export type Database = {
           kural_profili: string
           model_id: string | null
           ogrenci_sayisi: number
+          onay_tarihi: string | null
           program_donemi: string
           toplam_sure: number
           versiyon: number
@@ -335,6 +336,7 @@ export type Database = {
           kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
+          onay_tarihi?: string | null
           program_donemi?: string
           toplam_sure?: number
           versiyon?: number
@@ -353,6 +355,7 @@ export type Database = {
           kural_profili?: string
           model_id?: string | null
           ogrenci_sayisi?: number
+          onay_tarihi?: string | null
           program_donemi?: string
           toplam_sure?: number
           versiyon?: number

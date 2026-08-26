@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { adetBirimi, adetSayisi, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { useRol } from "@/lib/rol";
 import {
   SINIF_ROZET,
@@ -271,10 +273,8 @@ function PlanGorunumu() {
   const toplamSure = icerik.toplam_sure_dk ?? plan.toplam_sure;
   const asamaToplam = asamalar.reduce((t, a) => t + sayi(a.sure_dk), 0);
   const sureUyumsuz = asamalar.length > 0 && asamaToplam !== toplamSure;
-  const toplamMaliyet = malzemeler.reduce(
-    (t, m) => t + sayi(m.adet) * sayi(m.tahmini_birim_maliyet_tl),
-    0,
-  );
+  const maliyet = maliyetHesapla(malzemeler);
+
   const toplamHazirlik = malzemeler.reduce((t, m) => t + sayi(m.hazirlik_suresi_dk), 0);
 
   return (
@@ -635,13 +635,26 @@ function PlanGorunumu() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Input
-                          className="w-20"
-                          value={String(m.adet ?? "")}
-                          readOnly={!duzenlenebilir}
-                          onChange={(ev) => malzemeGuncelle(i, "adet", ev.target.value)}
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            className="w-16"
+                            inputMode="numeric"
+                            value={String(adetSayisi(m.adet) ?? "")}
+                            readOnly={!duzenlenebilir}
+                            onChange={(ev) =>
+                              malzemeGuncelle(i, "adet", Number(ev.target.value) || 0)
+                            }
+                          />
+                          <Input
+                            className="w-24"
+                            placeholder="adet"
+                            value={adetBirimi(m)}
+                            readOnly={!duzenlenebilir}
+                            onChange={(ev) => malzemeGuncelle(i, "birim", ev.target.value)}
+                          />
+                        </div>
                       </TableCell>
+
                       <TableCell>
                         <Input
                           className="w-24"
@@ -687,8 +700,14 @@ function PlanGorunumu() {
               <div className="mt-4 flex flex-wrap gap-6 text-sm">
                 <span>
                   <span className="text-muted-foreground">Toplam maliyet: </span>
-                  <span className="font-medium">{toplamMaliyet.toFixed(2)} TL</span>
+                  <span className="font-medium">{paraBicimi(maliyet.toplam)} TL</span>
+                  {maliyet.hesaplanamayan > 0 && (
+                    <span className="ml-2 text-destructive">
+                      {maliyet.hesaplanamayan} satır hesaplanamadı
+                    </span>
+                  )}
                 </span>
+
                 <span>
                   <span className="text-muted-foreground">Toplam hazırlık süresi: </span>
                   <span className="font-medium">{toplamHazirlik} dk</span>
@@ -699,59 +718,28 @@ function PlanGorunumu() {
         </TabsContent>
 
         <TabsContent value="medya" className="mt-4 space-y-4">
-          {(["basili", "dijital"] as const).map((kat) => {
-            const grup = medyalar
-              .map((m, i) => ({ m, i }))
-              .filter(({ m }) => (m.kategori ?? "dijital").toLowerCase().includes(kat));
-            return (
-              <Card key={kat}>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    {kat === "basili" ? "Basılı materyaller" : "Dijital materyaller"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tip</TableHead>
-                        <TableHead>Kategori</TableHead>
-                        <TableHead>Açıklama</TableHead>
-                        <TableHead>Arama terimi</TableHead>
-                        <TableHead>Aşama</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grup.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-muted-foreground">
-                            Bu grupta öneri yok.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {grup.map(({ m, i }) => (
-                        <TableRow key={i}>
-                          <TableCell>{m.tip}</TableCell>
-                          <TableCell>{m.kategori}</TableCell>
-                          <TableCell>
-                            <Textarea
-                              rows={2}
-                              value={m.aciklama ?? ""}
-                              readOnly={!duzenlenebilir}
-                              onChange={(ev) => medyaGuncelle(i, "aciklama", ev.target.value)}
-                            />
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">{m.arama_terimi}</TableCell>
-                          <TableCell>{m.kullanilacak_asama}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            );
-          })}
+          <MedyaBolumu
+            planId={plan.id}
+            medyalar={medyalar}
+            duzenlenebilir={duzenlenebilir}
+            kazanimMetni={icerik.kazanim?.metin ?? kazanim?.metin ?? ""}
+            seviye={SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}
+            atolyeAlani={kazanim?.atolye_alani ?? ""}
+            planBasligi={icerik.plan_basligi ?? "Atölye planı"}
+            onAciklamaDegis={(i: number, deger: string) => medyaGuncelle(i, "aciklama", deger)}
+            onGorsel={async (i: number, yol: string) => {
+              const yeni = [...(icerik.medya_onerileri ?? [])];
+              yeni[i] = { ...(yeni[i] as Medya), gorsel_yolu: yol };
+              const guncel = { ...icerik, medya_onerileri: yeni };
+              setIcerik(guncel);
+              await supabase
+                .from("planlar")
+                .update({ icerik: guncel as never })
+                .eq("id", plan.id);
+            }}
+          />
         </TabsContent>
+
 
         <TabsContent value="olcme" className="mt-4 space-y-4">
           <Card>
