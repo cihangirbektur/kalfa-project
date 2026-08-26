@@ -302,6 +302,10 @@ function PlanGorunumu() {
 
   const toplamHazirlik = malzemeler.reduce((t, m) => t + sayi(m.hazirlik_suresi_dk), 0);
 
+  if (typeof document !== "undefined") {
+    document.title = `${icerik.plan_basligi ?? "Atölye planı"} · KALFA`;
+  }
+
   const yazdir = (kapsam: YazdirKapsami) => {
     setYazdirKapsami(kapsam);
     setTimeout(() => window.print(), 50);

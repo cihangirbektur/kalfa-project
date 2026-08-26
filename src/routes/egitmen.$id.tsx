@@ -171,6 +171,10 @@ function EgitmenPlan() {
     ? new Date(plan.onay_tarihi).toLocaleString("tr-TR")
     : "kayıtlı değil";
 
+  if (typeof document !== "undefined") {
+    document.title = `${icerik.plan_basligi ?? "Atölye planı"} · KALFA`;
+  }
+
   const yazdir = (kapsam: YazdirKapsami) => {
     setYazdirKapsami(kapsam);
     setTimeout(() => window.print(), 50);
