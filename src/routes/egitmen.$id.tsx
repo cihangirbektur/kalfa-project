@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { DetayIskeleti } from "@/components/Iskelet";
+
 import { adetGosterim, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import { bildirimOzeti, bildirimleriCoz, geriBildirimKodla, tarihBicimi } from "@/lib/geribildirim";
 import { GipsciSerit } from "@/components/GipsciSerit";
