@@ -14,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -30,11 +31,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { MedyaBolumu } from "@/components/MedyaBolumu";
+import { adetGosterim, maliyetHesapla, paraBicimi } from "@/lib/hesap";
 import {
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
   SINIF_ROZET,
   type GeriBildirim,
+  type Kazanim,
+  type Medya,
   type Plan,
   type PlanIcerik,
 } from "@/lib/tipler";
@@ -50,7 +55,8 @@ export const Route = createFileRoute("/egitmen/$id")({
       { property: "og:title", content: "Atölye Uygulaması — KALFA" },
       {
         property: "og:description",
-        content: "Eğitmenler için salt okunur plan görünümü, yazdırılabilir kartlar ve geri bildirim.",
+        content:
+          "Eğitmenler için salt okunur plan görünümü, yazdırılabilir kartlar ve geri bildirim.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -58,6 +64,15 @@ export const Route = createFileRoute("/egitmen/$id")({
   }),
   component: EgitmenPlan,
 });
+
+function Satir({ etiket, deger }: { etiket: string; deger: string }) {
+  return (
+    <p className="text-sm">
+      <span className="font-medium">{etiket}: </span>
+      <span className="text-muted-foreground">{deger || "—"}</span>
+    </p>
+  );
+}
 
 function EgitmenPlan() {
   const { id } = Route.useParams();
@@ -77,7 +92,17 @@ function EgitmenPlan() {
         .eq("durum", "onayli")
         .maybeSingle();
       if (error) throw error;
-      return (plan as unknown as Plan | null) ?? null;
+      if (!plan) return null;
+      let kazanim: Kazanim | null = null;
+      if (plan.kazanim_id) {
+        const { data: k } = await supabase
+          .from("kazanimlar")
+          .select("*")
+          .eq("id", plan.kazanim_id)
+          .maybeSingle();
+        kazanim = (k as Kazanim | null) ?? null;
+      }
+      return { plan: plan as unknown as Plan, kazanim };
     },
   });
 
@@ -103,7 +128,10 @@ function EgitmenPlan() {
           <CardTitle className="text-base">Plan görüntülenemiyor</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <p>Bu plan onaylı değil veya kaldırılmış. Eğitmen görünümünde yalnızca onaylı planlar açılır.</p>
+          <p>
+            Bu plan onaylı değil veya kaldırılmış. Eğitmen görünümünde yalnızca onaylı planlar
+            açılır.
+          </p>
           <Link to="/egitmen" className="font-medium text-primary underline">
             Onaylı içeriklere dön
           </Link>
@@ -112,15 +140,21 @@ function EgitmenPlan() {
     );
   }
 
-  const plan = data;
+  const { plan, kazanim } = data;
   const icerik: PlanIcerik = plan.icerik ?? {};
   const asamalar = icerik.asamalar ?? [];
+  const etkinlikler = icerik.etkinlikler ?? [];
   const malzemeler = icerik.malzemeler ?? [];
+  const medyalar = icerik.medya_onerileri ?? [];
   const kartlar = icerik.merak_tetikleyicileri?.soru_kartlari ?? [];
+  const maliyet = maliyetHesapla(malzemeler);
   const model =
     plan.kural_profili === "GIPSCI"
       ? "GiPSci"
       : (OGRETIM_SECENEK_ETIKET[plan.asama_sablonu ?? ""] ?? "—");
+  const onayTarihi = plan.onay_tarihi
+    ? new Date(plan.onay_tarihi).toLocaleString("tr-TR")
+    : "kayıtlı değil";
 
   const gonder = async () => {
     const metin = [
@@ -146,11 +180,25 @@ function EgitmenPlan() {
     qc.invalidateQueries({ queryKey: ["egitmen-bildirim", id] });
   };
 
+  const gorselKaydet = async (i: number, yol: string) => {
+    const yeni = [...medyalar];
+    yeni[i] = { ...(yeni[i] as Medya), gorsel_yolu: yol };
+    const guncel = { ...icerik, medya_onerileri: yeni };
+    await supabase
+      .from("planlar")
+      .update({ icerik: guncel as never })
+      .eq("id", plan.id);
+    qc.invalidateQueries({ queryKey: ["egitmen-plan", id] });
+  };
+
   return (
     <>
-      <div className="mx-auto max-w-4xl space-y-6 print:hidden">
+      <div className="mx-auto max-w-5xl space-y-6 print:hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
+            <Link to="/egitmen" className="text-xs text-muted-foreground underline">
+              ← Onaylı içerikler
+            </Link>
             <h1 className="text-2xl font-semibold tracking-tight">
               {icerik.plan_basligi ?? "Adsız plan"}
             </h1>
@@ -161,109 +209,307 @@ function EgitmenPlan() {
               </p>
             )}
             <div className="flex flex-wrap gap-2 text-xs">
+              {kazanim?.atolye_alani && (
+                <Badge variant="secondary">{kazanim.atolye_alani}</Badge>
+              )}
               <Badge variant="secondary">{SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}</Badge>
               <Badge variant="secondary">{plan.toplam_sure} dk</Badge>
               <Badge variant="secondary">Model: {model}</Badge>
               <Badge variant="secondary">Salt okunur</Badge>
             </div>
+            <p className="text-xs text-muted-foreground">Onay tarihi: {onayTarihi}</p>
           </div>
           <Button variant="outline" onClick={() => window.print()}>
-            Yazdırılabilir görünüm
+            Yazdır
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Aşamalar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {asamalar.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aşama tanımlı değil.</p>
-            ) : (
-              <Accordion type="multiple" className="space-y-2">
-                {asamalar.map((a, i) => (
-                  <AccordionItem key={i} value={`a-${i}`} className="rounded-xl border px-4">
-                    <AccordionTrigger className="text-left">
-                      <span className="font-medium">{a.asama}</span>
-                      <span className="ml-auto mr-2 text-xs text-muted-foreground">
-                        {a.sure_dk} dk
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="space-y-2 pb-4 text-sm">
-                      <p className="text-muted-foreground">{a.amac}</p>
-                      <p>
-                        <span className="font-medium">Öğretmen:</span> {a.ogretmen_eylemi}
-                      </p>
-                      <p>
-                        <span className="font-medium">Öğrenci:</span> {a.ogrenci_eylemi}
-                      </p>
-                      {(a.tetikleyici_sorular ?? []).length > 0 && (
-                        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                          {a.tetikleyici_sorular.map((s, j) => (
-                            <li key={j}>{s}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="asamalar">
+          <TabsList className="flex flex-wrap">
+            <TabsTrigger value="asamalar">Aşamalar</TabsTrigger>
+            <TabsTrigger value="etkinlikler">Etkinlikler</TabsTrigger>
+            <TabsTrigger value="malzemeler">Malzemeler</TabsTrigger>
+            <TabsTrigger value="medya">Medya</TabsTrigger>
+            <TabsTrigger value="olcme">Ölçme</TabsTrigger>
+            <TabsTrigger value="kartlar">Soru Kartları</TabsTrigger>
+            <TabsTrigger value="urun">Ürün</TabsTrigger>
+          </TabsList>
 
-        {(icerik.etkinlikler ?? []).length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Etkinlikler</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              {(icerik.etkinlikler ?? []).map((e, i) => (
-                <div key={i} className="rounded-lg border p-3">
-                  <p className="font-medium">
-                    {e.ad}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({ETKINLIK_TIP_ETIKET[e.tip] ?? e.tip} · {e.sure_dk} dk)
-                    </span>
-                  </p>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+          <TabsContent value="asamalar" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                {asamalar.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Aşama tanımlı değil.</p>
+                ) : (
+                  <Accordion type="multiple" className="space-y-2">
+                    {asamalar.map((a, i) => (
+                      <AccordionItem key={i} value={`a-${i}`} className="rounded-xl border px-4">
+                        <AccordionTrigger className="text-left">
+                          <span className="font-medium">{a.asama}</span>
+                          <span className="ml-auto mr-2 text-xs text-muted-foreground">
+                            {a.sure_dk} dk
+                          </span>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-2 pb-4 text-sm">
+                          <p className="text-muted-foreground">{a.amac}</p>
+                          <Satir etiket="Öğretmen" deger={a.ogretmen_eylemi} />
+                          <Satir etiket="Öğrenci" deger={a.ogrenci_eylemi} />
+                          {(a.tetikleyici_sorular ?? []).length > 0 && (
+                            <>
+                              <p className="font-medium">Tetikleyici sorular</p>
+                              <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                                {a.tetikleyici_sorular.map((s, j) => (
+                                  <li key={j}>{s}</li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                          {(a.beklenen_kavram_yanilgilari ?? []).length > 0 && (
+                            <>
+                              <p className="font-medium">Beklenen kavram yanılgıları</p>
+                              <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                                {a.beklenen_kavram_yanilgilari.map((k, j) => (
+                                  <li key={j}>
+                                    {k.yanilgi} — {k.ele_alinma_bicimi}
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="etkinlikler" className="mt-4 space-y-3">
+            {etkinlikler.length === 0 && (
+              <Card>
+                <CardContent className="py-6 text-sm text-muted-foreground">
+                  Etkinlik tanımlı değil.
+                </CardContent>
+              </Card>
+            )}
+            {etkinlikler.map((e, i) => (
+              <Card key={i}>
+                <CardHeader className="space-y-2">
+                  <CardTitle className="text-base">{e.ad}</CardTitle>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <Badge variant="secondary">{ETKINLIK_TIP_ETIKET[e.tip] ?? e.tip}</Badge>
+                    <Badge variant="secondary">{e.sure_dk} dk</Badge>
+                    {e.bagli_asama && <Badge variant="secondary">{e.bagli_asama}</Badge>}
+                    {e.bloom_seviyesi && <Badge variant="secondary">{e.bloom_seviyesi}</Badge>}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
                     {(e.adimlar ?? []).map((s, j) => (
                       <li key={j}>{s}</li>
                     ))}
                   </ol>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                  <Satir etiket="Kazanım hizası" deger={e.kazanim_hizasi} />
+                  <Satir etiket="Destek" deger={e.farklilastirma?.destek ?? ""} />
+                  <Satir etiket="Zenginleştirme" deger={e.farklilastirma?.zenginlestirme ?? ""} />
+                  {e.oyun_yapisi && (
+                    <div className="rounded-lg border p-3">
+                      <p className="mb-2 font-medium">Oyun yapısı</p>
+                      <Satir etiket="Oyuncu sayısı" deger={e.oyun_yapisi.oyuncu_sayisi} />
+                      <Satir etiket="Bileşenler" deger={e.oyun_yapisi.bilesenler} />
+                      <Satir
+                        etiket="Kart/parça tipleri"
+                        deger={(e.oyun_yapisi.kart_veya_parca_tipleri ?? []).join(", ")}
+                      />
+                      <Satir etiket="Tur akışı" deger={(e.oyun_yapisi.tur_akisi ?? []).join(" → ")} />
+                      <Satir etiket="Kazanma koşulu" deger={e.oyun_yapisi.kazanma_kosulu} />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
-        {malzemeler.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Malzemeler</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Malzeme</TableHead>
-                    <TableHead>Adet</TableHead>
-                    <TableHead>Güvenlik notu</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {malzemeler.map((m, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{m.ad}</TableCell>
-                      <TableCell>{m.adet}</TableCell>
-                      <TableCell className="text-muted-foreground">{m.guvenlik_notu}</TableCell>
+          <TabsContent value="malzemeler" className="mt-4">
+            <Card>
+              <CardContent className="pt-6">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Malzeme</TableHead>
+                      <TableHead>Adet</TableHead>
+                      <TableHead>Birim maliyet (TL)</TableHead>
+                      <TableHead>Hazırlık (dk)</TableHead>
+                      <TableHead>Güvenlik notu</TableHead>
+                      <TableHead>Alternatif</TableHead>
                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {malzemeler.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-muted-foreground">
+                          Malzeme listesi boş.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {malzemeler.map((m, i) => (
+                      <TableRow key={i} className={m.guvenlik_notu ? "bg-destructive/5" : undefined}>
+                        <TableCell className="font-medium">{m.ad}</TableCell>
+                        <TableCell>{adetGosterim(m)}</TableCell>
+                        <TableCell>{paraBicimi(Number(m.tahmini_birim_maliyet_tl) || 0)}</TableCell>
+                        <TableCell>{m.hazirlik_suresi_dk}</TableCell>
+                        <TableCell
+                          className={m.guvenlik_notu ? "font-medium text-destructive" : undefined}
+                        >
+                          {m.guvenlik_notu || "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {m.alternatif || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <p className="mt-4 text-sm">
+                  <span className="text-muted-foreground">Toplam maliyet: </span>
+                  <span className="font-medium">{paraBicimi(maliyet.toplam)} TL</span>
+                  {maliyet.hesaplanamayan > 0 && (
+                    <span className="ml-2 text-destructive">
+                      {maliyet.hesaplanamayan} satır hesaplanamadı
+                    </span>
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="medya" className="mt-4">
+            <MedyaBolumu
+              planId={plan.id}
+              medyalar={medyalar}
+              duzenlenebilir={false}
+              kazanimMetni={icerik.kazanim?.metin ?? kazanim?.metin ?? ""}
+              seviye={SINIF_ROZET[plan.yas_grubu] ?? plan.yas_grubu}
+              atolyeAlani={kazanim?.atolye_alani ?? ""}
+              planBasligi={icerik.plan_basligi ?? "Atölye planı"}
+              onGorsel={gorselKaydet}
+            />
+          </TabsContent>
+
+          <TabsContent value="olcme" className="mt-4 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Biçimlendirici değerlendirme</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                {(icerik.degerlendirme?.bicimlendirici ?? []).length === 0 ? (
+                  <p className="text-muted-foreground">Tanımlı değil.</p>
+                ) : (
+                  (icerik.degerlendirme?.bicimlendirici ?? []).map((b, i) => (
+                    <Satir key={i} etiket={b.asama} deger={b.soru} />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+            {(icerik.degerlendirme?.surec_odakli ?? []).length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Süreç odaklı değerlendirme</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  {(icerik.degerlendirme?.surec_odakli ?? []).map((s, i) => (
+                    <Satir key={i} etiket={s.ne_gozlemlenecek} deger={s.yansitici_arac} />
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Düzey belirleyici görev</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <p>{icerik.degerlendirme?.duzey_belirleyici?.gorev || "—"}</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kriter</TableHead>
+                      <TableHead>3 puan</TableHead>
+                      <TableHead>2 puan</TableHead>
+                      <TableHead>1 puan</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(icerik.degerlendirme?.duzey_belirleyici?.rubrik ?? []).map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{r.kriter}</TableCell>
+                        <TableCell>{r["3_puan"]}</TableCell>
+                        <TableCell>{r["2_puan"]}</TableCell>
+                        <TableCell>{r["1_puan"]}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="kartlar" className="mt-4 space-y-4">
+            {kartlar.length === 0 ? (
+              <Card>
+                <CardContent className="py-6 text-sm text-muted-foreground">
+                  Soru kartı tanımlı değil.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {kartlar.map((s, i) => (
+                  <Card key={i}>
+                    <CardContent className="space-y-2 py-5 text-sm">
+                      <p className="text-xs text-muted-foreground">Kart {i + 1}</p>
+                      <p>{s}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+            {icerik.merak_tetikleyicileri?.merak_kutusu_notu && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Merak kutusu notu</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  {icerik.merak_tetikleyicileri.merak_kutusu_notu}
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="urun" className="mt-4">
+            <Card>
+              <CardContent className="space-y-2 pt-6 text-sm">
+                {!icerik.urun_odakli_cikti ? (
+                  <p className="text-muted-foreground">Ürün odaklı çıktı tanımlı değil.</p>
+                ) : (
+                  <>
+                    <p className="text-base font-medium">
+                      {icerik.urun_odakli_cikti.urun_adi || "Ürün"}
+                    </p>
+                    <Satir etiket="Ürün tipi" deger={icerik.urun_odakli_cikti.urun_tipi ?? ""} />
+                    <Satir
+                      etiket="Öğrenci ne üretecek"
+                      deger={icerik.urun_odakli_cikti.ogrenci_ne_uretecek ?? ""}
+                    />
+                    <Satir
+                      etiket="Değerlendirme ölçütü"
+                      deger={icerik.urun_odakli_cikti.degerlendirme_olcutu ?? ""}
+                    />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         <Card>
           <CardHeader>
@@ -358,12 +604,13 @@ function EgitmenPlan() {
               {malzemeler.map((m, i) => (
                 <tr key={i}>
                   <td className="border-b py-1">{m.ad}</td>
-                  <td className="border-b py-1">{m.adet}</td>
+                  <td className="border-b py-1">{adetGosterim(m)}</td>
                   <td className="border-b py-1">{m.guvenlik_notu}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          <p className="mt-3 text-sm">Toplam maliyet: {paraBicimi(maliyet.toplam)} TL</p>
         </section>
       </div>
     </>
