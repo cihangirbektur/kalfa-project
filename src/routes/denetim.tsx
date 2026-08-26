@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { DurumEtiketi } from "@/components/DurumEtiketi";
+import { GeriBildirimListesi } from "@/components/GeriBildirimListesi";
+import { kararEtiketi, turSurumleri } from "@/lib/surum";
 import {
   KURAL_KAYNAKLARI,
   KURAL_METINLERI,
@@ -354,9 +356,9 @@ function Denetim() {
               </CardContent>
             </Card>
 
-            {secili && (
+            {seciliId && (
               <GeriBildirimListesi
-                planId={secili}
+                planId={seciliId}
                 baslik="Saha geri bildirimleri (uygulayan eğitmenler)"
               />
             )}
