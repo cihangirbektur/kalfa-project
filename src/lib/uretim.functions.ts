@@ -65,15 +65,19 @@ BEKLENEN JSON:
         "kart_veya_parca_tipleri": [""], "tur_akisi": [""], "kazanma_kosulu": "" } }
   ],
   "malzemeler": [
-    { "ad": "", "adet": "", "tahmini_birim_maliyet_tl": 0,
+    { "ad": "", "adet": 20, "birim": "adet | set | paket | kutu | metre",
+      "tahmini_birim_maliyet_tl": 0,
       "hazirlik_suresi_dk": 0, "guvenlik_notu": "", "alternatif": "",
       "basilabilir_mi": false }
   ],
   "medya_onerileri": [
-    { "tip": "gorsel | animasyon | video | simulasyon",
+    { "ad": "",
+      "tip": "gorsel | animasyon | video | simulasyon | calisma_yapragi | soru_karti_destesi | poster | yonerge_karti | rubrik_formu | oyun_mati | etiket",
       "kategori": "basili | dijital", "aciklama": "", "arama_terimi": "",
-      "kullanilacak_asama": "" }
+      "onerilen_kaynak": "", "ne_icerir": "", "sayfa_sayisi": 1,
+      "baski_notu": "", "kullanilacak_asama": "" }
   ],
+
   "merak_tetikleyicileri": {
     "soru_kartlari": ["", "", "", ""],
     "merak_kutusu_notu": ""
