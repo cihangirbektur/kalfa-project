@@ -23,7 +23,7 @@ export function Kabuk({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
+      <aside className="hidden w-64 print:!hidden shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
         <div className="px-6 py-6">
           <div className="text-2xl font-semibold tracking-tight">KALFA</div>
           <p className="mt-1 text-xs text-sidebar-foreground/70">
@@ -51,7 +51,7 @@ export function Kabuk({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-3">
+        <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-3 print:hidden">
           <div className="text-sm text-muted-foreground md:hidden font-semibold text-foreground">
             KALFA
           </div>
@@ -74,7 +74,7 @@ export function Kabuk({ children }: { children: ReactNode }) {
             </Select>
           </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 print:p-0">{children}</main>
       </div>
     </div>
   );
