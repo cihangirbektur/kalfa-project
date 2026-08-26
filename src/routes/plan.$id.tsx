@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+
 import { DurumEtiketi } from "@/components/DurumEtiketi";
 import { MedyaBolumu } from "@/components/MedyaBolumu";
 import { GipsciSerit } from "@/components/GipsciSerit";
