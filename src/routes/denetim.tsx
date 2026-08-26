@@ -155,7 +155,11 @@ function Denetim() {
 
   const durumGuncelle = async (durum: string) => {
     if (!plan) return;
-    const { error } = await supabase.from("planlar").update({ durum }).eq("id", plan.id);
+    const simdi = new Date().toISOString();
+    const { error } = await supabase
+      .from("planlar")
+      .update(durum === "onayli" ? { durum, onay_tarihi: simdi } : { durum })
+      .eq("id", plan.id);
     if (error) {
       toast.error("Güncellenemedi: " + error.message);
       return;

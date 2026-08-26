@@ -212,6 +212,7 @@ export type Plan = {
   kural_profili?: string;
   arsivlendi?: boolean;
   arsivlenme_tarihi?: string | null;
+  onay_tarihi?: string | null;
   icerik: PlanIcerik;
   created_at: string;
 };

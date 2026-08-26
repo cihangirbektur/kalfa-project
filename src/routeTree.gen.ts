@@ -55,9 +55,9 @@ const EgitmenIndexRoute = EgitmenIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const EgitmenIdRoute = EgitmenIdRouteImport.update({
-  id: '/egitmen/$id',
-  path: '/egitmen/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EgitmenRoute,
 } as any)
 const PlanIdRoute = PlanIdRouteImport.update({
   id: '/plan/$id',
@@ -142,7 +142,6 @@ export interface RootRouteChildren {
   RaporlarRoute: typeof RaporlarRoute
   YasUyarlamaRoute: typeof YasUyarlamaRoute
   ApiGorselUretRoute: typeof ApiGorselUretRoute
-  EgitmenIdRoute: typeof EgitmenIdRoute
   PlanIdRoute: typeof PlanIdRoute
   EgitmenIndexRoute: typeof EgitmenIndexRoute
 }
@@ -200,10 +199,10 @@ declare module '@tanstack/react-router' {
     }
     '/egitmen/$id': {
       id: '/egitmen/$id'
-      path: '/egitmen/$id'
+      path: '/$id'
       fullPath: '/egitmen/$id'
       preLoaderRoute: typeof EgitmenIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof EgitmenRoute
     }
     '/plan/$id': {
       id: '/plan/$id'
@@ -222,7 +221,6 @@ const rootRouteChildren: RootRouteChildren = {
   RaporlarRoute: RaporlarRoute,
   YasUyarlamaRoute: YasUyarlamaRoute,
   ApiGorselUretRoute: ApiGorselUretRoute,
-  EgitmenIdRoute: EgitmenIdRoute,
   PlanIdRoute: PlanIdRoute,
   EgitmenIndexRoute: EgitmenIndexRoute,
 }
