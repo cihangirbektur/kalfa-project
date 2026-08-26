@@ -594,8 +594,16 @@ function EgitmenPlan() {
               />
             </div>
             <Button onClick={gonder} disabled={gonderiliyor}>
-              {gonderiliyor ? "Gönderiliyor…" : "Geri bildirimi gönder"}
+              {gonderiliyor ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Gönderiliyor…
+                </span>
+              ) : (
+                "Geri bildirimi gönder"
+              )}
             </Button>
+
 
             <div className="space-y-2 border-t pt-4">
               <p className="text-sm font-medium">Bu planı uygulayan diğer eğitmenler</p>
