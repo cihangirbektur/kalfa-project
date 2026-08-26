@@ -184,9 +184,16 @@ function Raporlar() {
         </CardHeader>
         <CardContent className="space-y-6">
           {isLoading ? (
-            <p className="text-sm text-muted-foreground">Yükleniyor…</p>
+            <div className="space-y-2">
+              <Iskelet className="h-4 w-2/3" />
+              <Iskelet className="h-4 w-1/2" />
+              <Iskelet className="h-4 w-3/5" />
+            </div>
           ) : programGruplari.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Henüz plan üretilmedi.</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Henüz plan üretilmedi; ilk plan üretildiğinde dağılım burada görünür.
+            </p>
+
           ) : (
             programGruplari.map((g) => (
               <div key={g.program}>
