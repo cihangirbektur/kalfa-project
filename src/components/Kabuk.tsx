@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 
 export function Kabuk({ children }: { children: ReactNode }) {
-  const { rol, setRol } = useRol();
+  const { rol, setRol, hazir } = useRol();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const gezinme = ROL_MENULERI[rol];
