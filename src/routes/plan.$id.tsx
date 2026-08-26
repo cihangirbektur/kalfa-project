@@ -700,8 +700,14 @@ function PlanGorunumu() {
               <div className="mt-4 flex flex-wrap gap-6 text-sm">
                 <span>
                   <span className="text-muted-foreground">Toplam maliyet: </span>
-                  <span className="font-medium">{toplamMaliyet.toFixed(2)} TL</span>
+                  <span className="font-medium">{paraBicimi(maliyet.toplam)} TL</span>
+                  {maliyet.hesaplanamayan > 0 && (
+                    <span className="ml-2 text-destructive">
+                      {maliyet.hesaplanamayan} satır hesaplanamadı
+                    </span>
+                  )}
                 </span>
+
                 <span>
                   <span className="text-muted-foreground">Toplam hazırlık süresi: </span>
                   <span className="font-medium">{toplamHazirlik} dk</span>
