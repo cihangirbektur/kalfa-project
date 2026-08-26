@@ -11,7 +11,7 @@ export function GipsciSerit({
   toplamSure,
 }: {
   icerik: PlanIcerik;
-  kuralProfili?: string;
+  kuralProfili?: string | undefined;
   toplamSure: number;
 }) {
   const [acik, setAcik] = useState(false);
