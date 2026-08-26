@@ -35,6 +35,9 @@ import {
   ETKINLIK_TIP_ETIKET,
   OGRETIM_SECENEK_ETIKET,
   OYUN_TIPLERI,
+  SEVIYE_ETIKET,
+  KURAL_METINLERI,
+
 } from "@/lib/tipler";
 
 import type {
