@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Loader2 } from "lucide-react";
+import { AsamaliBekleme, URETIM_ADIMLARI } from "@/components/AsamaliBekleme";
+
 import { toast } from "sonner";
 import { planUret } from "@/lib/uretim.functions";
 import {
