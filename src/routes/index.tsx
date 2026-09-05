@@ -341,91 +341,25 @@ function YeniPlan() {
             </Select>
           </div>
 
-          {bilimTr ? (
-            <div className="space-y-2 md:col-span-2">
-              <Label>Konu başlığı</Label>
-              <Select value={konuBasligi} onValueChange={setKonuBasligi}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Konu başlığı seçiniz" />
-                </SelectTrigger>
-                <SelectContent>
-                  {konuSecenekleri.map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {k}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
-                sayfasında düzenlenebilir.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 md:col-span-2">
-              <Label>Kazanım</Label>
-              <Popover open={acik} onOpenChange={setAcik}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="h-auto min-h-10 w-full justify-start whitespace-normal py-2 text-left font-normal"
-                  >
-                    {secili ? (
-                      <span className="flex flex-wrap items-start gap-2">
-                        <Badge variant="secondary" className="shrink-0">
-                          {secili.kod}
-                        </Badge>
-                        <span className="flex-1">{secili.metin}</span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Kazanım seçiniz</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] p-0"
-                >
-                  <div className="border-b border-border p-2">
-                    <Input
-                      placeholder="Kod veya metin içinde ara…"
-                      value={arama}
-                      onChange={(e) => setArama(e.target.value)}
-                    />
-                  </div>
-                  <div className="max-h-80 overflow-y-auto p-1">
-                    {filtreliKazanimlar.length === 0 ? (
-                      <p className="p-3 text-sm text-muted-foreground">
-                        Bu alan ve seviye için tanımlı kazanım bulunmuyor.
-                      </p>
-                    ) : aramaliKazanimlar.length === 0 ? (
-                      <p className="p-3 text-sm text-muted-foreground">Eşleşen kazanım yok.</p>
-                    ) : (
-                      aramaliKazanimlar.map((k) => (
-                        <button
-                          key={k.id}
-                          type="button"
-                          onClick={() => {
-                            setKazanimId(k.id);
-                            setAcik(false);
-                          }}
-                          className={`flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground ${
-                            k.id === kazanimId ? "bg-muted" : ""
-                          }`}
-                        >
-                          <Badge variant="secondary" className="mt-0.5 shrink-0">
-                            {k.kod}
-                          </Badge>
-                          <span className="flex-1 whitespace-normal">{k.metin}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
+          <div className="space-y-2 md:col-span-2">
+            <Label>Konu başlığı</Label>
+            <Select value={konuBasligi} onValueChange={setKonuBasligi}>
+              <SelectTrigger>
+                <SelectValue placeholder="Konu başlığı seçiniz" />
+              </SelectTrigger>
+              <SelectContent>
+                {konuSecenekleri.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {k}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
+              sayfasında düzenlenebilir.
+            </p>
+          </div>
 
 
           <div className="space-y-2 md:col-span-2">
