@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "KALFA — Bilim Türkiye Atölye İçeriği" },
-      { name: "description", content: "Kalfa üretir, usta onaylar. DENEYAP atölye eğitmenleri için 5E uyumlu içerik üretim aracı." },
+      { name: "description", content: "Kalfa üretir, usta onaylar. Bilim Türkiye atölye eğitmenleri için 5E uyumlu içerik üretim aracı." },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
       { property: "og:description", content: "5E modeline uygun atölye planı, etkinlik ve ölçme aracı üretimi." },

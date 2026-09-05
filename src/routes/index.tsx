@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Loader2 } from "lucide-react";
 import { AsamaliBekleme, URETIM_ADIMLARI } from "@/components/AsamaliBekleme";
 
@@ -29,21 +28,16 @@ import {
   BILIMTR_PROGRAM_TURLERI,
   BILIMTR_PROGRAM_TURU_ETIKET,
   BILIMTR_YAS_GRUPLARI,
-  DENEYAP_DUZEYLERI,
   GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
   MODEL_BILGI,
   OGRETIM_SECENEKLERI,
-  PROGRAM_DONEMLERI,
-  PROGRAM_DONEMI_ETIKET,
   PROGRAM_GRUP_ETIKET,
-  PROGRAM_SIRASI,
   SINIF_ETIKET,
   SINIF_YAS,
   konuBasliklariAl,
   type AsamaSablonu,
   type AtolyeAlani,
-  type Kazanim,
   type KuralProfili,
   type OgretimModeli,
   type PlanIcerik,
@@ -83,15 +77,6 @@ function YeniPlan() {
     },
   });
 
-  const { data: kazanimlar = [] } = useQuery({
-    queryKey: ["kazanimlar"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("kazanimlar").select("*").order("kod");
-      if (error) throw error;
-      return data as Kazanim[];
-    },
-  });
-
   const { data: modeller = [] } = useQuery({
     queryKey: ["modeller"],
     queryFn: async () => {
@@ -120,15 +105,12 @@ function YeniPlan() {
   });
 
   const [alanId, setAlanId] = useState("");
-  const [kazanimId, setKazanimId] = useState("");
   const [konuBasligi, setKonuBasligi] = useState("");
   const [seviye, setSeviye] = useState<string>(BILIMTR_YAS_GRUPLARI[0].deger);
   const [donem, setDonem] = useState<string>(BILIMTR_PROGRAM_TURLERI[0].deger);
   const [ogretim, setOgretim] = useState<string>("GIPSCI");
   const [sure, setSure] = useState(String(BILIMTR_PROGRAM_TURLERI[0].sure));
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
-  const [arama, setArama] = useState("");
-  const [acik, setAcik] = useState(false);
   const [uretiliyor, setUretiliyor] = useState(false);
   const [hata, setHata] = useState(false);
 
@@ -141,7 +123,6 @@ function YeniPlan() {
   const btAlanlar = useMemo(() => alanlar.filter((a) => a.program === BILIMTR), [alanlar]);
   const seciliAlan = btAlanlar.find((a) => a.id === alanId);
   const program = BILIMTR;
-  const bilimTr = true;
 
   const alanSec = (yeniId: string) => {
     setAlanId(yeniId);
