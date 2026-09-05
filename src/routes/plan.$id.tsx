@@ -90,7 +90,7 @@ export const Route = createFileRoute("/plan/$id")({
       { property: "og:title", content: "Atölye Planı — KALFA" },
       {
         property: "og:description",
-        content: "Aşama aşama düzenlenebilir Bilim Türkiye atölye planı görünümü.",
+        content: "Aşama aşama düzenlenebilir Bilim Türkiye ve Keşif Kampüsü atölye planı görünümü.",
       },
     ],
   }),

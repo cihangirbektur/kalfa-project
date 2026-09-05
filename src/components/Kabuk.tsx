@@ -57,7 +57,7 @@ export function Kabuk({ children }: { children: ReactNode }) {
             KALFA
           </div>
           <div className="hidden text-sm text-muted-foreground md:block">
-            Bilim Türkiye atölye içeriği üretim aracı
+            Bilim Türkiye ve Keşif Kampüsü atölye içeriği üretim aracı
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Rol</span>

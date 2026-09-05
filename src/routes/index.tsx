@@ -55,13 +55,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KALFA — Bilim Türkiye Atölye İçeriği" },
+      { title: "KALFA — Bilim Türkiye ve Keşif Kampüsü Atölye İçeriği" },
       {
         name: "description",
         content:
-          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye atölye planı üretin.",
+          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye ve Keşif Kampüsü atölye planı üretin.",
       },
-      { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
+      { property: "og:title", content: "KALFA — Bilim Türkiye ve Keşif Kampüsü Atölye İçeriği" },
       {
         property: "og:description",
         content: "Kalfa üretir, usta onaylar: yapay zekâ destekli atölye içeriği üretim aracı.",
@@ -260,7 +260,7 @@ function YeniPlan() {
           <p className="text-3xl font-semibold tracking-tight">KALFA</p>
           <p className="text-base font-medium opacity-90">Kalfa üretir, usta onaylar.</p>
           <p className="max-w-2xl text-sm opacity-85">
-            Bilim Türkiye atölyeleri için kazanıma bağlı atölye içeriği üretir,
+            Bilim Türkiye ve Keşif Kampüsü atölyeleri için kazanıma bağlı atölye içeriği üretir,
             ürettiğini bağımsız bir pedagojik denetçiyle sınar, son sözü uzmana bırakır.
           </p>
         </header>
