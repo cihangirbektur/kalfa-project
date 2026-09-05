@@ -452,7 +452,7 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {BILIMTR_PROGRAM_TURLERI.map((p) => (
+                {programTurleri.map((p) => (
                   <SelectItem key={p.deger} value={p.deger}>
                     {p.etiket}
                   </SelectItem>
@@ -460,8 +460,12 @@ function YeniPlan() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
+              {kesifMi
+                ? (KESIF_PROGRAM_TURU_NOTU[donem] ??
+                  "Keşif Kampüsü, T3 Vakfı çocuk üniversitesi programıdır.")
+                : "Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği"}
             </p>
+
           </div>
 
           <div className="space-y-2">
