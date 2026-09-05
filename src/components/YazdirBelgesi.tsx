@@ -56,7 +56,7 @@ export function YazdirBelgesi({ plan, icerik, kazanim, modelAdi, alanAdi, kapsam
     <div className="kalfa-yazdir">
       {kapsam === "tum" && (
         <section className="y-sayfa">
-          <div className="y-ust">KALFA · Bilim Türkiye / DENEYAP atölye içeriği</div>
+          <div className="y-ust">KALFA · Bilim Türkiye ve Keşif Kampüsü atölye içeriği</div>
           <h1 className="y-baslik">{baslik}</h1>
           {kazanimKodu && <p className="y-kod">{kazanimKodu}</p>}
           <p className="y-kazanim">{kazanimMetni}</p>

@@ -30,6 +30,13 @@ import {
   BILIMTR_YAS_GRUPLARI,
   GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
+  KESIF,
+  KESIF_KAYNAK_NOTU,
+  KESIF_PROGRAM_TURLERI,
+  KESIF_PROGRAM_TURU_ETIKET,
+  KESIF_PROGRAM_TURU_NOTU,
+  KESIF_YAS_GRUPLARI,
+
   MODEL_BILGI,
   OGRETIM_SECENEKLERI,
   PROGRAM_GRUP_ETIKET,
@@ -48,13 +55,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "KALFA — Bilim Türkiye Atölye İçeriği" },
+      { title: "KALFA — Bilim Türkiye ve Keşif Kampüsü Atölye İçeriği" },
       {
         name: "description",
         content:
-          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye atölye planı üretin.",
+          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye ve Keşif Kampüsü atölye planı üretin.",
       },
-      { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
+      { property: "og:title", content: "KALFA — Bilim Türkiye ve Keşif Kampüsü Atölye İçeriği" },
       {
         property: "og:description",
         content: "Kalfa üretir, usta onaylar: yapay zekâ destekli atölye içeriği üretim aracı.",
@@ -119,19 +126,39 @@ function YeniPlan() {
   const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
   const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
-  /** Yeni plan üretimi yalnızca Bilim Türkiye atölyeleri için yapılır. */
+  /** Yeni plan üretimi Bilim Türkiye ve Keşif Kampüsü atölyeleri için yapılır. */
   const btAlanlar = useMemo(() => alanlar.filter((a) => a.program === BILIMTR), [alanlar]);
-  const seciliAlan = btAlanlar.find((a) => a.id === alanId);
-  const program = BILIMTR;
+  const kesifAlanlar = useMemo(() => alanlar.filter((a) => a.program === KESIF), [alanlar]);
+  const formAlanlari = useMemo(() => [...btAlanlar, ...kesifAlanlar], [btAlanlar, kesifAlanlar]);
+  const seciliAlan = formAlanlari.find((a) => a.id === alanId);
+  const program = seciliAlan?.program ?? BILIMTR;
+  const kesifMi = program === KESIF;
+
+  const yasGruplari: readonly { deger: string; etiket: string }[] = kesifMi
+    ? KESIF_YAS_GRUPLARI
+    : BILIMTR_YAS_GRUPLARI;
+  const programTurleri: readonly { deger: string; etiket: string; sure: number }[] = kesifMi
+    ? KESIF_PROGRAM_TURLERI
+    : BILIMTR_PROGRAM_TURLERI;
+
 
   const alanSec = (yeniId: string) => {
     setAlanId(yeniId);
     setKonuBasligi("");
+    const yeni = formAlanlari.find((a) => a.id === yeniId);
+    const yeniProgram = yeni?.program ?? BILIMTR;
+    if (yeniProgram !== program) {
+      const yasListe = yeniProgram === KESIF ? KESIF_YAS_GRUPLARI : BILIMTR_YAS_GRUPLARI;
+      const turListe = yeniProgram === KESIF ? KESIF_PROGRAM_TURLERI : BILIMTR_PROGRAM_TURLERI;
+      setSeviye(yasListe[0].deger);
+      setDonem(turListe[0].deger);
+      setSure(String(turListe[0].sure));
+    }
   };
 
   const programTuruSec = (v: string) => {
     setDonem(v);
-    const t = BILIMTR_PROGRAM_TURLERI.find((p) => p.deger === v);
+    const t = programTurleri.find((p) => p.deger === v);
     if (t) setSure(String(t.sure));
   };
 
@@ -140,9 +167,14 @@ function YeniPlan() {
     [seciliAlan, seviye],
   );
 
+  /** Keşif Kampüsü'nde örnek konu listesi olmayan atölyelerde başlık serbest yazılır. */
+  const serbestKonu = kesifMi && konuSecenekleri.length === 0;
+
   useEffect(() => {
+    if (serbestKonu) return;
     if (konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
-  }, [konuSecenekleri, konuBasligi]);
+  }, [konuSecenekleri, konuBasligi, serbestKonu]);
+
 
 
 
@@ -181,7 +213,10 @@ function YeniPlan() {
           })),
           toplam_sure: toplamSure,
           ogrenci_sayisi: sayi,
-          program_donemi: BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem,
+          program_donemi: kesifMi
+            ? (KESIF_PROGRAM_TURU_ETIKET[donem] ?? donem)
+            : (BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem),
+
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
@@ -225,7 +260,7 @@ function YeniPlan() {
           <p className="text-3xl font-semibold tracking-tight">KALFA</p>
           <p className="text-base font-medium opacity-90">Kalfa üretir, usta onaylar.</p>
           <p className="max-w-2xl text-sm opacity-85">
-            Bilim Türkiye atölyeleri için kazanıma bağlı atölye içeriği üretir,
+            Bilim Türkiye ve Keşif Kampüsü atölyeleri için kazanıma bağlı atölye içeriği üretir,
             ürettiğini bağımsız bir pedagojik denetçiyle sınar, son sözü uzmana bırakır.
           </p>
         </header>
@@ -301,46 +336,71 @@ function YeniPlan() {
                     </SelectItem>
                   ))}
                 </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>
+                    {PROGRAM_GRUP_ETIKET[KESIF]} ({kesifAlanlar.length})
+                  </SelectLabel>
+                  {kesifAlanlar.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.ad}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Yaş grubu / Düzey</Label>
+            <Label>{kesifMi ? "Sınıf düzeyi" : "Yaş grubu / Düzey"}</Label>
 
             <Select value={seviye} onValueChange={setSeviye}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {BILIMTR_YAS_GRUPLARI.map((s) => (
+                {yasGruplari.map((s) => (
                   <SelectItem key={s.deger} value={s.deger}>
                     {s.etiket}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {kesifMi && (
+              <p className="text-xs text-muted-foreground">
+                Keşif Kampüsü tek, birleşik sınıf düzeyiyle çalışır.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
             <Label>Konu başlığı</Label>
-            <Select value={konuBasligi} onValueChange={setKonuBasligi}>
-              <SelectTrigger>
-                <SelectValue placeholder="Konu başlığı seçiniz" />
-              </SelectTrigger>
-              <SelectContent>
-                {konuSecenekleri.map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {k}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {serbestKonu ? (
+              <Input
+                value={konuBasligi}
+                onChange={(e) => setKonuBasligi(e.target.value)}
+                placeholder="Konu başlığını yazınız"
+              />
+            ) : (
+              <Select value={konuBasligi} onValueChange={setKonuBasligi}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Konu başlığı seçiniz" />
+                </SelectTrigger>
+                <SelectContent>
+                  {konuSecenekleri.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {k}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <p className="text-xs text-muted-foreground">
-              Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
-              sayfasında düzenlenebilir.
+              {serbestKonu
+                ? "Bu atölyede örnek konu listesi yok; başlığı siz yazarsınız. Kazanım metni bu başlıktan üretim sırasında türetilir."
+                : "Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan sayfasında düzenlenebilir."}
             </p>
           </div>
+
 
 
           <div className="space-y-2 md:col-span-2">
@@ -395,7 +455,7 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {BILIMTR_PROGRAM_TURLERI.map((p) => (
+                {programTurleri.map((p) => (
                   <SelectItem key={p.deger} value={p.deger}>
                     {p.etiket}
                   </SelectItem>
@@ -403,8 +463,12 @@ function YeniPlan() {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
+              {kesifMi
+                ? (KESIF_PROGRAM_TURU_NOTU[donem] ??
+                  "Keşif Kampüsü, T3 Vakfı çocuk üniversitesi programıdır.")
+                : "Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği"}
             </p>
+
           </div>
 
           <div className="space-y-2">
@@ -449,7 +513,10 @@ function YeniPlan() {
                   </div>
                 </>
               )}
-              <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {kesifMi ? KESIF_KAYNAK_NOTU : BILIMTR_KAYNAK_NOTU}
+              </p>
+
             </div>
           )}
 

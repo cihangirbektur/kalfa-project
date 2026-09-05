@@ -228,6 +228,10 @@ export const planUret = createServerFn({ method: "POST" })
     const kullaniciMesaji = [
       `ATÖLYE ALANI: ${data.atolye_alani}`,
       `PROGRAM: ${data.program ?? "DENEYAP Teknoloji Atölyesi"}`,
+      data.program === "Keşif Kampüsü"
+        ? `PROGRAM BAĞLAMI: Keşif Kampüsü, T3 Vakfı'nın 4 ve 5. sınıf öğrencilerine yönelik çocuk üniversitesi programıdır. Katılımcılar 4-5. sınıf (9-11 yaş) düzeyindedir. Bu oturum ya hafta içi okul gruplarına yönelik gün boyu süren tek günlük bir atölyedir ya da hafta sonu iki yıllık 384 saatlik sarmal müfredatın bir parçasıdır; hangisi olduğu PROGRAM DÖNEMİ alanında yazar. Verilen konu başlığı yalnızca bir seçim başlığıdır; kazanım metnini, ders akışını, etkinlikleri ve materyalleri tamamen sen özgün olarak üret, hazır bir metni kopyalama.`
+        : ``,
+
       data.konu_basliklari.length > 0
         ? `ALANIN KONU BAŞLIKLARI: ${data.konu_basliklari.join(", ")}`
         : `ALANIN KONU BAŞLIKLARI: tanımlı değil — üretimi tema tanımı üzerinden yap, etkinlikler tema düzeyinde kalsın.`,
