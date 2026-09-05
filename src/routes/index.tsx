@@ -510,7 +510,10 @@ function YeniPlan() {
                   </div>
                 </>
               )}
-              <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {kesifMi ? KESIF_KAYNAK_NOTU : BILIMTR_KAYNAK_NOTU}
+              </p>
+
             </div>
           )}
 
