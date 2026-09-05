@@ -342,17 +342,21 @@ export const DENEYAP_DUZEYLERI = SINIF_DUZEYLERI.filter(
 export const SINIF_ETIKET: Record<string, string> = {
   ...Object.fromEntries(SINIF_DUZEYLERI.map((s) => [s.deger, s.etiket])),
   ...BILIMTR_YAS_ETIKET,
+  kesif_4_5: "4. ve 5. Sınıf",
 };
 
 export const SINIF_ROZET: Record<string, string> = {
   ...Object.fromEntries(SINIF_DUZEYLERI.map((s) => [s.deger, `${s.kisa} · ${s.yas}`])),
   ...BILIMTR_YAS_ETIKET,
+  kesif_4_5: "4. ve 5. Sınıf · 9–11 yaş",
 };
 
 export const SINIF_YAS: Record<string, string> = {
   ...Object.fromEntries(SINIF_DUZEYLERI.map((s) => [s.deger, s.yas])),
   ...Object.fromEntries(BILIMTR_YAS_GRUPLARI.map((y) => [y.deger, `${y.deger} yaş`])),
+  kesif_4_5: "9–11 yaş",
 };
+
 
 
 
