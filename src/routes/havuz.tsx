@@ -143,8 +143,7 @@ function Havuz() {
   const satirlar = useMemo(() => {
     const liste = planlar.filter((p) => {
       if (Boolean(p.arsivlendi) !== arsivde) return false;
-      const k = p.kazanim_id ? kazanimHarita.get(p.kazanim_id) : undefined;
-      if (alan !== TUMU && k?.atolye_alani !== alan) return false;
+      if (alan !== TUMU && planAlanAdi(p) !== alan) return false;
       if (yas !== TUMU && p.yas_grubu !== yas) return false;
       if (durum !== TUMU && p.durum !== durum) return false;
       return true;
