@@ -134,8 +134,13 @@ function YeniPlan() {
   const program = seciliAlan?.program ?? BILIMTR;
   const kesifMi = program === KESIF;
 
-  const yasGruplari = kesifMi ? KESIF_YAS_GRUPLARI : BILIMTR_YAS_GRUPLARI;
-  const programTurleri = kesifMi ? KESIF_PROGRAM_TURLERI : BILIMTR_PROGRAM_TURLERI;
+  const yasGruplari: readonly { deger: string; etiket: string }[] = kesifMi
+    ? KESIF_YAS_GRUPLARI
+    : BILIMTR_YAS_GRUPLARI;
+  const programTurleri: readonly { deger: string; etiket: string; sure: number }[] = kesifMi
+    ? KESIF_PROGRAM_TURLERI
+    : BILIMTR_PROGRAM_TURLERI;
+
 
   const alanSec = (yeniId: string) => {
     setAlanId(yeniId);
