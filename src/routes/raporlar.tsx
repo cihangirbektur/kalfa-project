@@ -125,7 +125,8 @@ function Raporlar() {
       };
     })
       .map((g) => (g.toplam === 0 ? { ...g, dolu: [], bos: [] } : g))
-      .filter((g) => g.toplam > 0);
+      .filter((g) => g.toplam > 0)
+      .filter((g) => g.program !== "DENEYAP Teknoloji Atölyesi");
   }, [aktif, harita, alanlar]);
 
 
