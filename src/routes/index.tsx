@@ -454,13 +454,13 @@ function YeniPlan() {
               {seciliAlan.amac && (
                 <p className="mt-3 text-sm text-muted-foreground">{seciliAlan.amac}</p>
               )}
-              {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).length > 0 && (
+              {konuSecenekleri.length > 0 && (
                 <>
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Konu başlıkları{bilimTr ? ` · ${SINIF_ETIKET[seviye] ?? seviye}` : ""}
+                    Konu başlıkları · {SINIF_ETIKET[seviye] ?? seviye}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).map((k) => (
+                    {konuSecenekleri.map((k) => (
                       <Badge key={k} variant="secondary" className="font-normal">
                         {k}
                       </Badge>
@@ -468,24 +468,11 @@ function YeniPlan() {
                   </div>
                 </>
               )}
-              {bilimTr && <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>}
+              <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>
             </div>
           )}
 
 
-          {secili && (
-            <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-accent text-accent-foreground">{secili.kod}</Badge>
-                <Badge variant="secondary">{secili.bloom_seviyesi}</Badge>
-                <Badge variant="secondary">
-                  {SINIF_ETIKET[secili.yas_grubu] ?? secili.yas_grubu}
-                </Badge>
-                <Badge variant="secondary">{secili.atolye_alani}</Badge>
-              </div>
-              <p className="mt-3 text-sm text-foreground">{secili.metin}</p>
-            </div>
-          )}
 
           <div className="space-y-3 md:col-span-2">
             <Button
