@@ -150,14 +150,41 @@ export type AtolyeAlani = {
   kitap_lise_url: string | null;
 };
 
-export const PROGRAM_SIRASI = ["Bilim Türkiye", "DENEYAP Teknoloji Atölyesi"] as const;
+export const PROGRAM_SIRASI = [
+  "Bilim Türkiye",
+  "Keşif Kampüsü",
+  "DENEYAP Teknoloji Atölyesi",
+] as const;
 
 export const PROGRAM_GRUP_ETIKET: Record<string, string> = {
   "Bilim Türkiye": "Bilim Türkiye Atölyeleri",
+  "Keşif Kampüsü": "Keşif Kampüsü Atölyeleri",
   "DENEYAP Teknoloji Atölyesi": "DENEYAP Teknoloji Atölyesi Eğitim Alanları",
 };
 
 export const BILIMTR = "Bilim Türkiye";
+export const KESIF = "Keşif Kampüsü";
+
+/** Keşif Kampüsü'nde tek, birleşik sınıf düzeyi vardır. */
+export const KESIF_YAS_GRUPLARI = [{ deger: "kesif_4_5", etiket: "4. ve 5. Sınıf" }] as const;
+
+export const KESIF_PROGRAM_TURLERI = [
+  { deger: "kesif_hafta_ici", etiket: "Hafta İçi — Eğitimde Farklı 1 Gün", sure: 300 },
+  { deger: "kesif_hafta_sonu", etiket: "Hafta Sonu — 2 Yıllık Müfredat", sure: 120 },
+] as const;
+
+export const KESIF_PROGRAM_TURU_ETIKET: Record<string, string> = Object.fromEntries(
+  KESIF_PROGRAM_TURLERI.map((p) => [p.deger, p.etiket]),
+);
+
+export const KESIF_PROGRAM_TURU_NOTU: Record<string, string> = {
+  kesif_hafta_ici: "Okul grupları için gün boyu süren tek günlük atölye.",
+  kesif_hafta_sonu: "384 saatlik iki yıllık sarmal müfredatın bir parçası.",
+};
+
+export const KESIF_KAYNAK_NOTU =
+  "Keşif Kampüsü, T3 Vakfı'nın 4 ve 5. sınıf öğrencilerine yönelik çocuk üniversitesi programıdır. Örnek konu başlığı bulunmayan atölyelerde başlığı siz yazarsınız.";
+
 
 /** Bilim Türkiye yaş grupları (konu_basliklari jsonb anahtarlarıyla birebir). */
 export const BILIMTR_YAS_GRUPLARI = [
