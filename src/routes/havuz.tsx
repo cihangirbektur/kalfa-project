@@ -122,9 +122,19 @@ function Havuz() {
     () => new Map(atolyeAlanlari.map((a) => [a.id, a])),
     [atolyeAlanlari],
   );
+  /** Filtre listesi yalnızca havuzda gerçekten kaydı olan atölye alanlarını gösterir. */
+  const planAlanAdi = useMemo(
+    () => (p: Plan) =>
+      (p.kazanim_id ? kazanimHarita.get(p.kazanim_id)?.atolye_alani : undefined) ??
+      (p.atolye_alani_id ? alanHarita.get(p.atolye_alani_id)?.ad : undefined),
+    [kazanimHarita, alanHarita],
+  );
   const alanlar = useMemo(
-    () => Array.from(new Set(kazanimlar.map((k) => k.atolye_alani))),
-    [kazanimlar],
+    () =>
+      Array.from(new Set(planlar.map((p) => planAlanAdi(p)).filter(Boolean) as string[])).sort(
+        (a, b) => a.localeCompare(b, "tr"),
+      ),
+    [planlar, planAlanAdi],
   );
 
 
