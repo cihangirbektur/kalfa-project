@@ -58,7 +58,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli DENEYAP atölye planı üretin.",
+          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye atölye planı üretin.",
       },
       { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
       {
@@ -122,10 +122,10 @@ function YeniPlan() {
   const [alanId, setAlanId] = useState("");
   const [kazanimId, setKazanimId] = useState("");
   const [konuBasligi, setKonuBasligi] = useState("");
-  const [seviye, setSeviye] = useState<string>("ortaokul");
-  const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
+  const [seviye, setSeviye] = useState<string>(BILIMTR_YAS_GRUPLARI[0].deger);
+  const [donem, setDonem] = useState<string>(BILIMTR_PROGRAM_TURLERI[0].deger);
   const [ogretim, setOgretim] = useState<string>("GIPSCI");
-  const [sure, setSure] = useState("90");
+  const [sure, setSure] = useState(String(BILIMTR_PROGRAM_TURLERI[0].sure));
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
   const [arama, setArama] = useState("");
   const [acik, setAcik] = useState(false);
@@ -137,29 +137,15 @@ function YeniPlan() {
   const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
   const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
-  const seciliAlan = alanlar.find((a) => a.id === alanId);
-  const program = seciliAlan?.program ?? "DENEYAP Teknoloji Atölyesi";
-  const bilimTr = program === BILIMTR;
+  /** Yeni plan üretimi yalnızca Bilim Türkiye atölyeleri için yapılır. */
+  const btAlanlar = useMemo(() => alanlar.filter((a) => a.program === BILIMTR), [alanlar]);
+  const seciliAlan = btAlanlar.find((a) => a.id === alanId);
+  const program = BILIMTR;
+  const bilimTr = true;
 
-  /** Atölye alanı değişince, programa uymayan seçimleri sıfırla. */
   const alanSec = (yeniId: string) => {
-    const yeni = alanlar.find((a) => a.id === yeniId);
-    const yeniProgram = yeni?.program ?? "DENEYAP Teknoloji Atölyesi";
     setAlanId(yeniId);
-    setKazanimId("");
     setKonuBasligi("");
-    if (yeniProgram !== program) {
-      if (yeniProgram === BILIMTR) {
-        setSeviye(BILIMTR_YAS_GRUPLARI[0].deger);
-        setDonem(BILIMTR_PROGRAM_TURLERI[0].deger);
-        setSure(String(BILIMTR_PROGRAM_TURLERI[0].sure));
-      } else {
-        setSeviye("ortaokul");
-        setDonem(PROGRAM_DONEMLERI[0].deger);
-        setSure("90");
-      }
-      if (alanId) toast.info("Program değişti, yaş grubu ve konu seçimini yenileyin.");
-    }
   };
 
   const programTuruSec = (v: string) => {
@@ -244,9 +230,7 @@ function YeniPlan() {
           })),
           toplam_sure: toplamSure,
           ogrenci_sayisi: sayi,
-          program_donemi: bilimTr
-            ? (BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem)
-            : (PROGRAM_DONEMI_ETIKET[donem] ?? donem),
+          program_donemi: BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem,
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
@@ -290,7 +274,7 @@ function YeniPlan() {
           <p className="text-3xl font-semibold tracking-tight">KALFA</p>
           <p className="text-base font-medium opacity-90">Kalfa üretir, usta onaylar.</p>
           <p className="max-w-2xl text-sm opacity-85">
-            Bilim Türkiye ve DENEYAP atölyeleri için kazanıma bağlı atölye içeriği üretir,
+            Bilim Türkiye atölyeleri için kazanıma bağlı atölye içeriği üretir,
             ürettiğini bağımsız bir pedagojik denetçiyle sınar, son sözü uzmana bırakır.
           </p>
         </header>
@@ -356,24 +340,16 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {PROGRAM_SIRASI.map((prog) => {
-                  const grup = alanlar.filter(
-                    (a) => (a.program ?? "DENEYAP Teknoloji Atölyesi") === prog,
-                  );
-                  if (grup.length === 0) return null;
-                  return (
-                    <SelectGroup key={prog}>
-                      <SelectLabel>
-                        {PROGRAM_GRUP_ETIKET[prog]} ({grup.length})
-                      </SelectLabel>
-                      {grup.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.ad}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  );
-                })}
+                <SelectGroup>
+                  <SelectLabel>
+                    {PROGRAM_GRUP_ETIKET[BILIMTR]} ({btAlanlar.length})
+                  </SelectLabel>
+                  {btAlanlar.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.ad}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -386,7 +362,7 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {(bilimTr ? BILIMTR_YAS_GRUPLARI : DENEYAP_DUZEYLERI).map((s) => (
+                {BILIMTR_YAS_GRUPLARI.map((s) => (
                   <SelectItem key={s.deger} value={s.deger}>
                     {s.etiket}
                   </SelectItem>
@@ -528,24 +504,22 @@ function YeniPlan() {
 
 
           <div className="space-y-2">
-            <Label>{bilimTr ? "Program türü" : "Program dönemi"}</Label>
-            <Select value={donem} onValueChange={bilimTr ? programTuruSec : setDonem}>
+            <Label>Program türü</Label>
+            <Select value={donem} onValueChange={programTuruSec}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {(bilimTr ? BILIMTR_PROGRAM_TURLERI : PROGRAM_DONEMLERI).map((p) => (
+                {BILIMTR_PROGRAM_TURLERI.map((p) => (
                   <SelectItem key={p.deger} value={p.deger}>
                     {p.etiket}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {bilimTr && (
-              <p className="text-xs text-muted-foreground">
-                Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
+            </p>
           </div>
 
           <div className="space-y-2">
