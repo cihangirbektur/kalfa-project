@@ -152,7 +152,7 @@ function Havuz() {
       liste.sort((a, b) => (DURUM_SIRA[a.durum] ?? 9) - (DURUM_SIRA[b.durum] ?? 9));
     }
     return liste;
-  }, [planlar, arsivde, alan, yas, durum, kazanimHarita, yonetici, sekme]);
+  }, [planlar, arsivde, alan, yas, durum, planAlanAdi, yonetici, sekme]);
 
   const secilebilir = satirlar.filter((p) => arsivleyebilirMi(rol, p.durum));
   const seciliListe = secili.filter((id) => satirlar.some((p) => p.id === id));
