@@ -333,46 +333,71 @@ function YeniPlan() {
                     </SelectItem>
                   ))}
                 </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel>
+                    {PROGRAM_GRUP_ETIKET[KESIF]} ({kesifAlanlar.length})
+                  </SelectLabel>
+                  {kesifAlanlar.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.ad}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Yaş grubu / Düzey</Label>
+            <Label>{kesifMi ? "Sınıf düzeyi" : "Yaş grubu / Düzey"}</Label>
 
             <Select value={seviye} onValueChange={setSeviye}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {BILIMTR_YAS_GRUPLARI.map((s) => (
+                {yasGruplari.map((s) => (
                   <SelectItem key={s.deger} value={s.deger}>
                     {s.etiket}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {kesifMi && (
+              <p className="text-xs text-muted-foreground">
+                Keşif Kampüsü tek, birleşik sınıf düzeyiyle çalışır.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
             <Label>Konu başlığı</Label>
-            <Select value={konuBasligi} onValueChange={setKonuBasligi}>
-              <SelectTrigger>
-                <SelectValue placeholder="Konu başlığı seçiniz" />
-              </SelectTrigger>
-              <SelectContent>
-                {konuSecenekleri.map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {k}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {serbestKonu ? (
+              <Input
+                value={konuBasligi}
+                onChange={(e) => setKonuBasligi(e.target.value)}
+                placeholder="Konu başlığını yazınız"
+              />
+            ) : (
+              <Select value={konuBasligi} onValueChange={setKonuBasligi}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Konu başlığı seçiniz" />
+                </SelectTrigger>
+                <SelectContent>
+                  {konuSecenekleri.map((k) => (
+                    <SelectItem key={k} value={k}>
+                      {k}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <p className="text-xs text-muted-foreground">
-              Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
-              sayfasında düzenlenebilir.
+              {serbestKonu
+                ? "Bu atölyede örnek konu listesi yok; başlığı siz yazarsınız. Kazanım metni bu başlıktan üretim sırasında türetilir."
+                : "Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan sayfasında düzenlenebilir."}
             </p>
           </div>
+
 
 
           <div className="space-y-2 md:col-span-2">
