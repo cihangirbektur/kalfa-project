@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Loader2 } from "lucide-react";
 import { AsamaliBekleme, URETIM_ADIMLARI } from "@/components/AsamaliBekleme";
 
@@ -29,21 +28,16 @@ import {
   BILIMTR_PROGRAM_TURLERI,
   BILIMTR_PROGRAM_TURU_ETIKET,
   BILIMTR_YAS_GRUPLARI,
-  DENEYAP_DUZEYLERI,
   GIPSCI_BILGI_NOTU,
   KATEGORI_ETIKET,
   MODEL_BILGI,
   OGRETIM_SECENEKLERI,
-  PROGRAM_DONEMLERI,
-  PROGRAM_DONEMI_ETIKET,
   PROGRAM_GRUP_ETIKET,
-  PROGRAM_SIRASI,
   SINIF_ETIKET,
   SINIF_YAS,
   konuBasliklariAl,
   type AsamaSablonu,
   type AtolyeAlani,
-  type Kazanim,
   type KuralProfili,
   type OgretimModeli,
   type PlanIcerik,
@@ -58,7 +52,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli DENEYAP atölye planı üretin.",
+          "Kazanım, seviye ve öğretim modeli seçerek yapay zekâ destekli Bilim Türkiye atölye planı üretin.",
       },
       { property: "og:title", content: "KALFA — Bilim Türkiye Atölye İçeriği" },
       {
@@ -80,15 +74,6 @@ function YeniPlan() {
       const { data, error } = await supabase.from("atolye_alanlari").select("*").order("ad");
       if (error) throw error;
       return data as unknown as AtolyeAlani[];
-    },
-  });
-
-  const { data: kazanimlar = [] } = useQuery({
-    queryKey: ["kazanimlar"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("kazanimlar").select("*").order("kod");
-      if (error) throw error;
-      return data as Kazanim[];
     },
   });
 
@@ -120,15 +105,12 @@ function YeniPlan() {
   });
 
   const [alanId, setAlanId] = useState("");
-  const [kazanimId, setKazanimId] = useState("");
   const [konuBasligi, setKonuBasligi] = useState("");
-  const [seviye, setSeviye] = useState<string>("ortaokul");
-  const [donem, setDonem] = useState<string>(PROGRAM_DONEMLERI[0].deger);
+  const [seviye, setSeviye] = useState<string>(BILIMTR_YAS_GRUPLARI[0].deger);
+  const [donem, setDonem] = useState<string>(BILIMTR_PROGRAM_TURLERI[0].deger);
   const [ogretim, setOgretim] = useState<string>("GIPSCI");
-  const [sure, setSure] = useState("90");
+  const [sure, setSure] = useState(String(BILIMTR_PROGRAM_TURLERI[0].sure));
   const [ogrenciSayisi, setOgrenciSayisi] = useState("20");
-  const [arama, setArama] = useState("");
-  const [acik, setAcik] = useState(false);
   const [uretiliyor, setUretiliyor] = useState(false);
   const [hata, setHata] = useState(false);
 
@@ -137,29 +119,14 @@ function YeniPlan() {
   const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
   const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
-  const seciliAlan = alanlar.find((a) => a.id === alanId);
-  const program = seciliAlan?.program ?? "DENEYAP Teknoloji Atölyesi";
-  const bilimTr = program === BILIMTR;
+  /** Yeni plan üretimi yalnızca Bilim Türkiye atölyeleri için yapılır. */
+  const btAlanlar = useMemo(() => alanlar.filter((a) => a.program === BILIMTR), [alanlar]);
+  const seciliAlan = btAlanlar.find((a) => a.id === alanId);
+  const program = BILIMTR;
 
-  /** Atölye alanı değişince, programa uymayan seçimleri sıfırla. */
   const alanSec = (yeniId: string) => {
-    const yeni = alanlar.find((a) => a.id === yeniId);
-    const yeniProgram = yeni?.program ?? "DENEYAP Teknoloji Atölyesi";
     setAlanId(yeniId);
-    setKazanimId("");
     setKonuBasligi("");
-    if (yeniProgram !== program) {
-      if (yeniProgram === BILIMTR) {
-        setSeviye(BILIMTR_YAS_GRUPLARI[0].deger);
-        setDonem(BILIMTR_PROGRAM_TURLERI[0].deger);
-        setSure(String(BILIMTR_PROGRAM_TURLERI[0].sure));
-      } else {
-        setSeviye("ortaokul");
-        setDonem(PROGRAM_DONEMLERI[0].deger);
-        setSure("90");
-      }
-      if (alanId) toast.info("Program değişti, yaş grubu ve konu seçimini yenileyin.");
-    }
   };
 
   const programTuruSec = (v: string) => {
@@ -169,49 +136,19 @@ function YeniPlan() {
   };
 
   const konuSecenekleri = useMemo(
-    () => (bilimTr ? konuBasliklariAl(seciliAlan, seviye) : []),
-    [bilimTr, seciliAlan, seviye],
+    () => konuBasliklariAl(seciliAlan, seviye),
+    [seciliAlan, seviye],
   );
 
-  const filtreliKazanimlar = useMemo(
-    () =>
-      bilimTr
-        ? []
-        : kazanimlar.filter(
-            (k) => k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
-          ),
-    [bilimTr, kazanimlar, seviye, seciliAlan],
-  );
-
-  const aramaliKazanimlar = useMemo(() => {
-    const q = arama.trim().toLocaleLowerCase("tr");
-    if (!q) return filtreliKazanimlar;
-    return filtreliKazanimlar.filter(
-      (k) =>
-        k.kod.toLocaleLowerCase("tr").includes(q) || k.metin.toLocaleLowerCase("tr").includes(q),
-    );
-  }, [filtreliKazanimlar, arama]);
-
-  const secili = kazanimlar.find((k) => k.id === kazanimId);
-
   useEffect(() => {
-    if (!bilimTr && kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId))
-      setKazanimId("");
-  }, [bilimTr, filtreliKazanimlar, kazanimId]);
-
-  useEffect(() => {
-    if (bilimTr && konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
-  }, [bilimTr, konuSecenekleri, konuBasligi]);
+    if (konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
+  }, [konuSecenekleri, konuBasligi]);
 
 
 
   const uret = async () => {
-    if (!seciliAlan || !seciliSablon || (bilimTr ? !konuBasligi : !secili)) {
-      toast.error(
-        bilimTr
-          ? "Atölye, yaş grubu, konu başlığı ve öğretim modeli seçilmelidir."
-          : "Atölye alanı, kazanım ve öğretim modeli seçilmelidir.",
-      );
+    if (!seciliAlan || !seciliSablon || !konuBasligi) {
+      toast.error("Atölye, yaş grubu, konu başlığı ve öğretim modeli seçilmelidir.");
       return;
     }
     setHata(false);
@@ -224,13 +161,13 @@ function YeniPlan() {
         data: {
           atolye_alani: seciliAlan.ad,
           program,
-          konu_basliklari: konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined),
+          konu_basliklari: konuBasliklariAl(seciliAlan, seviye),
           sure_hafta: seciliAlan.sure_hafta ?? 0,
-          konu_basligi: bilimTr ? konuBasligi : "",
-          kazanim_turet: bilimTr,
-          kazanim_kodu: secili?.kod ?? "",
-          kazanim_metni: secili?.metin ?? "",
-          bloom_seviyesi: secili?.bloom_seviyesi ?? "",
+          konu_basligi: konuBasligi,
+          kazanim_turet: true,
+          kazanim_kodu: "",
+          kazanim_metni: "",
+          bloom_seviyesi: "",
           seviye: SINIF_ETIKET[seviye] ?? seviye,
           yas_araligi: SINIF_YAS[seviye] ?? "",
           model_adi: seciliOgretim.etiket,
@@ -244,19 +181,17 @@ function YeniPlan() {
           })),
           toplam_sure: toplamSure,
           ogrenci_sayisi: sayi,
-          program_donemi: bilimTr
-            ? (BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem)
-            : (PROGRAM_DONEMI_ETIKET[donem] ?? donem),
+          program_donemi: BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem,
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
-      if (bilimTr) icerik.kazanim_turetildi = true;
+      icerik.kazanim_turetildi = true;
       const { data, error } = await supabase
         .from("planlar")
         .insert({
-          kazanim_id: bilimTr ? null : kazanimId,
+          kazanim_id: null,
           atolye_alani_id: seciliAlan.id,
-          konu_basligi: bilimTr ? konuBasligi : null,
+          konu_basligi: konuBasligi,
           model_id: eskiModel?.id ?? null,
           asama_sablonu: seciliOgretim.sablon,
           kural_profili: seciliOgretim.profil,
@@ -290,7 +225,7 @@ function YeniPlan() {
           <p className="text-3xl font-semibold tracking-tight">KALFA</p>
           <p className="text-base font-medium opacity-90">Kalfa üretir, usta onaylar.</p>
           <p className="max-w-2xl text-sm opacity-85">
-            Bilim Türkiye ve DENEYAP atölyeleri için kazanıma bağlı atölye içeriği üretir,
+            Bilim Türkiye atölyeleri için kazanıma bağlı atölye içeriği üretir,
             ürettiğini bağımsız bir pedagojik denetçiyle sınar, son sözü uzmana bırakır.
           </p>
         </header>
@@ -356,24 +291,16 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {PROGRAM_SIRASI.map((prog) => {
-                  const grup = alanlar.filter(
-                    (a) => (a.program ?? "DENEYAP Teknoloji Atölyesi") === prog,
-                  );
-                  if (grup.length === 0) return null;
-                  return (
-                    <SelectGroup key={prog}>
-                      <SelectLabel>
-                        {PROGRAM_GRUP_ETIKET[prog]} ({grup.length})
-                      </SelectLabel>
-                      {grup.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.ad}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  );
-                })}
+                <SelectGroup>
+                  <SelectLabel>
+                    {PROGRAM_GRUP_ETIKET[BILIMTR]} ({btAlanlar.length})
+                  </SelectLabel>
+                  {btAlanlar.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.ad}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -386,7 +313,7 @@ function YeniPlan() {
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {(bilimTr ? BILIMTR_YAS_GRUPLARI : DENEYAP_DUZEYLERI).map((s) => (
+                {BILIMTR_YAS_GRUPLARI.map((s) => (
                   <SelectItem key={s.deger} value={s.deger}>
                     {s.etiket}
                   </SelectItem>
@@ -395,91 +322,25 @@ function YeniPlan() {
             </Select>
           </div>
 
-          {bilimTr ? (
-            <div className="space-y-2 md:col-span-2">
-              <Label>Konu başlığı</Label>
-              <Select value={konuBasligi} onValueChange={setKonuBasligi}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Konu başlığı seçiniz" />
-                </SelectTrigger>
-                <SelectContent>
-                  {konuSecenekleri.map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {k}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
-                sayfasında düzenlenebilir.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2 md:col-span-2">
-              <Label>Kazanım</Label>
-              <Popover open={acik} onOpenChange={setAcik}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="h-auto min-h-10 w-full justify-start whitespace-normal py-2 text-left font-normal"
-                  >
-                    {secili ? (
-                      <span className="flex flex-wrap items-start gap-2">
-                        <Badge variant="secondary" className="shrink-0">
-                          {secili.kod}
-                        </Badge>
-                        <span className="flex-1">{secili.metin}</span>
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">Kazanım seçiniz</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  align="start"
-                  className="w-[--radix-popover-trigger-width] max-w-[calc(100vw-2rem)] p-0"
-                >
-                  <div className="border-b border-border p-2">
-                    <Input
-                      placeholder="Kod veya metin içinde ara…"
-                      value={arama}
-                      onChange={(e) => setArama(e.target.value)}
-                    />
-                  </div>
-                  <div className="max-h-80 overflow-y-auto p-1">
-                    {filtreliKazanimlar.length === 0 ? (
-                      <p className="p-3 text-sm text-muted-foreground">
-                        Bu alan ve seviye için tanımlı kazanım bulunmuyor.
-                      </p>
-                    ) : aramaliKazanimlar.length === 0 ? (
-                      <p className="p-3 text-sm text-muted-foreground">Eşleşen kazanım yok.</p>
-                    ) : (
-                      aramaliKazanimlar.map((k) => (
-                        <button
-                          key={k.id}
-                          type="button"
-                          onClick={() => {
-                            setKazanimId(k.id);
-                            setAcik(false);
-                          }}
-                          className={`flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground ${
-                            k.id === kazanimId ? "bg-muted" : ""
-                          }`}
-                        >
-                          <Badge variant="secondary" className="mt-0.5 shrink-0">
-                            {k.kod}
-                          </Badge>
-                          <span className="flex-1 whitespace-normal">{k.metin}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
+          <div className="space-y-2 md:col-span-2">
+            <Label>Konu başlığı</Label>
+            <Select value={konuBasligi} onValueChange={setKonuBasligi}>
+              <SelectTrigger>
+                <SelectValue placeholder="Konu başlığı seçiniz" />
+              </SelectTrigger>
+              <SelectContent>
+                {konuSecenekleri.map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {k}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Kazanım metni, seçilen konu başlığından üretim sırasında türetilir ve plan
+              sayfasında düzenlenebilir.
+            </p>
+          </div>
 
 
           <div className="space-y-2 md:col-span-2">
@@ -528,24 +389,22 @@ function YeniPlan() {
 
 
           <div className="space-y-2">
-            <Label>{bilimTr ? "Program türü" : "Program dönemi"}</Label>
-            <Select value={donem} onValueChange={bilimTr ? programTuruSec : setDonem}>
+            <Label>Program türü</Label>
+            <Select value={donem} onValueChange={programTuruSec}>
               <SelectTrigger>
                 <SelectValue placeholder="Seçiniz" />
               </SelectTrigger>
               <SelectContent>
-                {(bilimTr ? BILIMTR_PROGRAM_TURLERI : PROGRAM_DONEMLERI).map((p) => (
+                {BILIMTR_PROGRAM_TURLERI.map((p) => (
                   <SelectItem key={p.deger} value={p.deger}>
                     {p.etiket}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {bilimTr && (
-              <p className="text-xs text-muted-foreground">
-                Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground">
+              Kaynak: T3 Vakfı Araştırma Raporu, Şubat 2026 — Bilim Türkiye program çeşitliliği
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -576,13 +435,13 @@ function YeniPlan() {
               {seciliAlan.amac && (
                 <p className="mt-3 text-sm text-muted-foreground">{seciliAlan.amac}</p>
               )}
-              {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).length > 0 && (
+              {konuSecenekleri.length > 0 && (
                 <>
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Konu başlıkları{bilimTr ? ` · ${SINIF_ETIKET[seviye] ?? seviye}` : ""}
+                    Konu başlıkları · {SINIF_ETIKET[seviye] ?? seviye}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined).map((k) => (
+                    {konuSecenekleri.map((k) => (
                       <Badge key={k} variant="secondary" className="font-normal">
                         {k}
                       </Badge>
@@ -590,24 +449,11 @@ function YeniPlan() {
                   </div>
                 </>
               )}
-              {bilimTr && <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>}
+              <p className="mt-3 text-xs text-muted-foreground">{BILIMTR_KAYNAK_NOTU}</p>
             </div>
           )}
 
 
-          {secili && (
-            <div className="rounded-xl border border-border bg-muted/40 p-4 md:col-span-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="bg-accent text-accent-foreground">{secili.kod}</Badge>
-                <Badge variant="secondary">{secili.bloom_seviyesi}</Badge>
-                <Badge variant="secondary">
-                  {SINIF_ETIKET[secili.yas_grubu] ?? secili.yas_grubu}
-                </Badge>
-                <Badge variant="secondary">{secili.atolye_alani}</Badge>
-              </div>
-              <p className="mt-3 text-sm text-foreground">{secili.metin}</p>
-            </div>
-          )}
 
           <div className="space-y-3 md:col-span-2">
             <Button

@@ -123,7 +123,9 @@ function Raporlar() {
         dolu,
         bos,
       };
-    }).filter((g) => g.dolu.length + g.bos.length > 0);
+    })
+      .map((g) => (g.toplam === 0 ? { ...g, dolu: [], bos: [] } : g))
+      .filter((g) => g.toplam > 0);
   }, [aktif, harita, alanlar]);
 
 
