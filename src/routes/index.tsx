@@ -155,49 +155,19 @@ function YeniPlan() {
   };
 
   const konuSecenekleri = useMemo(
-    () => (bilimTr ? konuBasliklariAl(seciliAlan, seviye) : []),
-    [bilimTr, seciliAlan, seviye],
+    () => konuBasliklariAl(seciliAlan, seviye),
+    [seciliAlan, seviye],
   );
 
-  const filtreliKazanimlar = useMemo(
-    () =>
-      bilimTr
-        ? []
-        : kazanimlar.filter(
-            (k) => k.yas_grubu === seviye && (!seciliAlan || k.atolye_alani === seciliAlan.ad),
-          ),
-    [bilimTr, kazanimlar, seviye, seciliAlan],
-  );
-
-  const aramaliKazanimlar = useMemo(() => {
-    const q = arama.trim().toLocaleLowerCase("tr");
-    if (!q) return filtreliKazanimlar;
-    return filtreliKazanimlar.filter(
-      (k) =>
-        k.kod.toLocaleLowerCase("tr").includes(q) || k.metin.toLocaleLowerCase("tr").includes(q),
-    );
-  }, [filtreliKazanimlar, arama]);
-
-  const secili = kazanimlar.find((k) => k.id === kazanimId);
-
   useEffect(() => {
-    if (!bilimTr && kazanimId && !filtreliKazanimlar.some((k) => k.id === kazanimId))
-      setKazanimId("");
-  }, [bilimTr, filtreliKazanimlar, kazanimId]);
-
-  useEffect(() => {
-    if (bilimTr && konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
-  }, [bilimTr, konuSecenekleri, konuBasligi]);
+    if (konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
+  }, [konuSecenekleri, konuBasligi]);
 
 
 
   const uret = async () => {
-    if (!seciliAlan || !seciliSablon || (bilimTr ? !konuBasligi : !secili)) {
-      toast.error(
-        bilimTr
-          ? "Atölye, yaş grubu, konu başlığı ve öğretim modeli seçilmelidir."
-          : "Atölye alanı, kazanım ve öğretim modeli seçilmelidir.",
-      );
+    if (!seciliAlan || !seciliSablon || !konuBasligi) {
+      toast.error("Atölye, yaş grubu, konu başlığı ve öğretim modeli seçilmelidir.");
       return;
     }
     setHata(false);
@@ -210,13 +180,13 @@ function YeniPlan() {
         data: {
           atolye_alani: seciliAlan.ad,
           program,
-          konu_basliklari: konuBasliklariAl(seciliAlan, bilimTr ? seviye : undefined),
+          konu_basliklari: konuBasliklariAl(seciliAlan, seviye),
           sure_hafta: seciliAlan.sure_hafta ?? 0,
-          konu_basligi: bilimTr ? konuBasligi : "",
-          kazanim_turet: bilimTr,
-          kazanim_kodu: secili?.kod ?? "",
-          kazanim_metni: secili?.metin ?? "",
-          bloom_seviyesi: secili?.bloom_seviyesi ?? "",
+          konu_basligi: konuBasligi,
+          kazanim_turet: true,
+          kazanim_kodu: "",
+          kazanim_metni: "",
+          bloom_seviyesi: "",
           seviye: SINIF_ETIKET[seviye] ?? seviye,
           yas_araligi: SINIF_YAS[seviye] ?? "",
           model_adi: seciliOgretim.etiket,
@@ -234,13 +204,13 @@ function YeniPlan() {
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
-      if (bilimTr) icerik.kazanim_turetildi = true;
+      icerik.kazanim_turetildi = true;
       const { data, error } = await supabase
         .from("planlar")
         .insert({
-          kazanim_id: bilimTr ? null : kazanimId,
+          kazanim_id: null,
           atolye_alani_id: seciliAlan.id,
-          konu_basligi: bilimTr ? konuBasligi : null,
+          konu_basligi: konuBasligi,
           model_id: eskiModel?.id ?? null,
           asama_sablonu: seciliOgretim.sablon,
           kural_profili: seciliOgretim.profil,
