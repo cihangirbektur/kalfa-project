@@ -119,19 +119,34 @@ function YeniPlan() {
   const seciliSablon = sablonlar.find((s) => s.kod === seciliOgretim.sablon);
   const seciliProfil = profiller.find((p) => p.kod === seciliOgretim.profil);
 
-  /** Yeni plan üretimi yalnızca Bilim Türkiye atölyeleri için yapılır. */
+  /** Yeni plan üretimi Bilim Türkiye ve Keşif Kampüsü atölyeleri için yapılır. */
   const btAlanlar = useMemo(() => alanlar.filter((a) => a.program === BILIMTR), [alanlar]);
-  const seciliAlan = btAlanlar.find((a) => a.id === alanId);
-  const program = BILIMTR;
+  const kesifAlanlar = useMemo(() => alanlar.filter((a) => a.program === KESIF), [alanlar]);
+  const formAlanlari = useMemo(() => [...btAlanlar, ...kesifAlanlar], [btAlanlar, kesifAlanlar]);
+  const seciliAlan = formAlanlari.find((a) => a.id === alanId);
+  const program = seciliAlan?.program ?? BILIMTR;
+  const kesifMi = program === KESIF;
+
+  const yasGruplari = kesifMi ? KESIF_YAS_GRUPLARI : BILIMTR_YAS_GRUPLARI;
+  const programTurleri = kesifMi ? KESIF_PROGRAM_TURLERI : BILIMTR_PROGRAM_TURLERI;
 
   const alanSec = (yeniId: string) => {
     setAlanId(yeniId);
     setKonuBasligi("");
+    const yeni = formAlanlari.find((a) => a.id === yeniId);
+    const yeniProgram = yeni?.program ?? BILIMTR;
+    if (yeniProgram !== program) {
+      const yasListe = yeniProgram === KESIF ? KESIF_YAS_GRUPLARI : BILIMTR_YAS_GRUPLARI;
+      const turListe = yeniProgram === KESIF ? KESIF_PROGRAM_TURLERI : BILIMTR_PROGRAM_TURLERI;
+      setSeviye(yasListe[0].deger);
+      setDonem(turListe[0].deger);
+      setSure(String(turListe[0].sure));
+    }
   };
 
   const programTuruSec = (v: string) => {
     setDonem(v);
-    const t = BILIMTR_PROGRAM_TURLERI.find((p) => p.deger === v);
+    const t = programTurleri.find((p) => p.deger === v);
     if (t) setSure(String(t.sure));
   };
 
@@ -140,9 +155,14 @@ function YeniPlan() {
     [seciliAlan, seviye],
   );
 
+  /** Keşif Kampüsü'nde örnek konu listesi olmayan atölyelerde başlık serbest yazılır. */
+  const serbestKonu = kesifMi && konuSecenekleri.length === 0;
+
   useEffect(() => {
+    if (serbestKonu) return;
     if (konuBasligi && !konuSecenekleri.includes(konuBasligi)) setKonuBasligi("");
-  }, [konuSecenekleri, konuBasligi]);
+  }, [konuSecenekleri, konuBasligi, serbestKonu]);
+
 
 
 
