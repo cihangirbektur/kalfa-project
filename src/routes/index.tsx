@@ -213,7 +213,10 @@ function YeniPlan() {
           })),
           toplam_sure: toplamSure,
           ogrenci_sayisi: sayi,
-          program_donemi: BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem,
+          program_donemi: kesifMi
+            ? (KESIF_PROGRAM_TURU_ETIKET[donem] ?? donem)
+            : (BILIMTR_PROGRAM_TURU_ETIKET[donem] ?? donem),
+
         },
       });
       const icerik = JSON.parse(cevap as string) as PlanIcerik;
